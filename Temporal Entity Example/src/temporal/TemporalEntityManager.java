@@ -13,7 +13,8 @@
 package temporal;
 
 import static temporal.TemporalHelper.NON_TEMPORAL;
-import static temporal.persistence.DescriptorHelper.*;
+import static temporal.persistence.DescriptorHelper.getClassDescriptor;
+import static temporal.persistence.DescriptorHelper.getEditionDescriptor;
 
 import java.lang.reflect.Member;
 
@@ -39,7 +40,8 @@ import temporal.persistence.AbstractEntityManagerWrapper;
 import temporal.persistence.DescriptorHelper;
 
 /**
- * TODO
+ * {@link EntityManager} wrapper that handles edition change tracking with
+ * {@link EditionSet}
  * 
  * @author dclarke
  * @since EclipseLink 2.3.2
@@ -53,17 +55,18 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
     public static final String EFF_TS_PROPERTY = "EFF_TS";
 
     /**
-     * TODO
+     * Property name used to cache the {@link TemporalEntityManager} wrapper
+     * within the properties of the {@link EntityManager}.
      */
     public static final String TEMPORAL_EM_PROPERTY = TemporalEntityManager.class.getName();
 
     /**
-     * TODO
+     * Current effective time for the creation of new editions
      */
     private Long effective;
 
     /**
-     * TODO
+     * Current {@link EditionSet}
      */
     private EditionSet editionSet;
 
@@ -74,7 +77,7 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
      * @return
      */
     public static TemporalEntityManager getInstance(EntityManager em) {
-        if (TemporalEntityManager.class.isAssignableFrom(em.getClass())) {
+        if (TemporalEntityManager.class == em.getClass()) {
             return (TemporalEntityManager) em;
         }
         TemporalEntityManager tem = (TemporalEntityManager) em.getProperties().get(TEMPORAL_EM_PROPERTY);
@@ -109,21 +112,13 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         return unwrap(RepeatableWriteUnitOfWork.class);
     }
 
-    public EditionSet setEffectiveTime(Long startTime, boolean initializeEditionSet) {
-        this.effective = startTime;
-        setProperty(EFF_TS_PROPERTY, startTime);
-
-        if (getEditionSet() != null && getEditionSet().getEffective() != startTime) {
+    public void setEffectiveTime(Long startTime) {
+        if (startTime != getEffectiveTime()) {
             this.editionSet = null;
         }
-        if (initializeEditionSet) {
-            this.editionSet = initializeEditionSet();
-        }
-        return this.editionSet;
-    }
 
-    public EditionSet setEffectiveTime(Long startTime) {
-        return setEffectiveTime(startTime, false);
+        this.effective = startTime;
+        setProperty(EFF_TS_PROPERTY, startTime);
     }
 
     public void clearEffectiveTime() {
@@ -131,10 +126,11 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         setProperty(EFF_TS_PROPERTY, null);
     }
 
+    /**
+     * @return the effective time using the {@link #editionSet} if available.
+     */
     public Long getEffectiveTime() {
-        // Lookup the EditionSet and use its effective if one exists.
-        EditionSet editionSet = getEditionSet();
-        if (editionSet != null) {
+        if (this.editionSet != null) {
             return editionSet.getEffective();
         }
 
@@ -143,6 +139,31 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
 
     public boolean hasEffectiveTime() {
         return getEffectiveTime() != null;
+    }
+
+    /**
+     * Return the current EditionSet for the effective time. If one has not been
+     * created then create one. Calling this will persist a new
+     * {@link EditionSet} which will be stored on commit. If this side effect is
+     * not desired then rely on the {@link #hasEditionSet()} to ensure one is
+     * not created inadvertently.
+     */
+    public EditionSet getEditionSet() {
+        Long effective = getEffectiveTime();
+        if (this.editionSet == null && effective != null && effective > Effectivity.BOT) {
+            EditionSet es = getEntityManager().find(EditionSet.class, effective);
+
+            if (es == null) {
+                es = new EditionSet(effective);
+                getEntityManager().persist(es);
+            }
+            this.editionSet = es;
+        }
+        return this.editionSet;
+    }
+
+    public boolean hasEditionSet() {
+        return this.editionSet != null;
     }
 
     /**
@@ -175,7 +196,7 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         if (start == null || start == Effectivity.BOT) {
             throw new IllegalStateException("Cannot create an eddition without an effective time set");
         }
-        
+
         ClassDescriptor descriptor = getClassDescriptor(session, sourceEntity);
         T source = sourceEntity;
         if (descriptor.hasWrapperPolicy() && descriptor.getWrapperPolicy().isWrapped(sourceEntity)) {
@@ -205,10 +226,10 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         edition.getEffectivity().setStart(start);
         edition.getEffectivity().setEnd(source.getEffectivity().getEnd());
         source.getEffectivity().setEnd(start);
-        
+
         getEntityManager().persist(edition);
 
-        editionSet.add(edition);
+        editionSet.add(edition, true);
 
         // Flush the transaction so that any changes made to the new edition are
         // tracked and the EditionSet can be properly populated at commit.
@@ -216,10 +237,10 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
             getEntityManager().flush();
         }
 
-        if (editionDesc.hasWrapperPolicy() && ! editionDesc.getWrapperPolicy().isWrapped(edition)) {
+        if (editionDesc.hasWrapperPolicy() && !editionDesc.getWrapperPolicy().isWrapped(edition)) {
             edition = (TemporalEntity<T>) editionDesc.getWrapperPolicy().wrapObject(edition, session);
         }
-        
+
         return (T) edition;
     }
 
@@ -267,7 +288,7 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         getEntityManager().persist(newInstance);
 
         if (editionSet != null) {
-            editionSet.add(newInstance);
+            editionSet.add(newInstance, true);
         }
 
         // TODO: Enable if change tracking required
@@ -316,15 +337,15 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         getEntityManager().persist(edition);
 
         if (editionSet != null) {
-            editionSet.add(edition);
+            editionSet.add(edition, true);
         }
 
         getEntityManager().flush();
 
-        if (descriptor.hasWrapperPolicy() && ! descriptor.getWrapperPolicy().isWrapped(edition)) {
+        if (descriptor.hasWrapperPolicy() && !descriptor.getWrapperPolicy().isWrapped(edition)) {
             edition = (TemporalEntity<T>) descriptor.getWrapperPolicy().wrapObject(edition, session);
         }
-        
+
         return (T) edition;
     }
 
@@ -341,10 +362,10 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         if (nonTemporal != null && Boolean.valueOf(nonTemporal)) {
             return;
         }
-        
+
         TemporalEntity<?> unwrappedSource = source;
         if (mapping.getDescriptor().hasWrapperPolicy() && mapping.getDescriptor().getWrapperPolicy().isWrapped(unwrappedSource)) {
-            unwrappedSource = (TemporalEntity<?>) mapping.getDescriptor().getWrapperPolicy().unwrapObject(unwrappedSource, session); 
+            unwrappedSource = (TemporalEntity<?>) mapping.getDescriptor().getWrapperPolicy().unwrapObject(unwrappedSource, session);
         }
 
         Member member = null;
@@ -363,10 +384,10 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         if (mapping.isCollectionMapping()) {
             value = ((CollectionMapping) mapping).getContainerPolicy().cloneFor(value);
         }
-        
+
         Object unwrappedTarget = target;
         if (mapping.getDescriptor().hasWrapperPolicy() && mapping.getDescriptor().getWrapperPolicy().isWrapped(unwrappedTarget)) {
-            unwrappedTarget = (TemporalEntity<?>) mapping.getDescriptor().getWrapperPolicy().unwrapObject(unwrappedTarget, session); 
+            unwrappedTarget = (TemporalEntity<?>) mapping.getDescriptor().getWrapperPolicy().unwrapObject(unwrappedTarget, session);
         }
 
         mapping.setRealAttributeValueInObject(unwrappedTarget, value);
@@ -404,30 +425,6 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         } finally {
             setEffectiveTime(original);
         }
-    }
-
-    public EditionSet getEditionSet() {
-        return this.editionSet;
-    }
-
-    /**
-     * Initialize a new EditionSet
-     */
-    public EditionSet initializeEditionSet() {
-        if (!hasEffectiveTime()) {
-            throw new IllegalStateException("No effective time configured");
-        }
-        Long effective = getEffectiveTime();
-
-        if (getEditionSet() == null || getEditionSet().getEffective() != effective) {
-            EditionSet es = getEntityManager().find(EditionSet.class, effective);
-            if (es == null) {
-                es = new EditionSet(effective);
-                getEntityManager().persist(es);
-            }
-            this.editionSet = es;
-        }
-        return editionSet;
     }
 
     /**
@@ -489,12 +486,12 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
      */
     private void updateTemporalQuery(Query query) {
         DatabaseQuery elQuery = JpaHelper.getDatabaseQuery(query);
-        
+
         if (hasEffectiveTime() && TemporalHelper.isTemporalEntity(elQuery.getReferenceClass())) {
             RepeatableWriteUnitOfWork uow = getUnitOfWork();
             ClassDescriptor descriptor = DescriptorHelper.getEditionDescriptor(uow, elQuery.getReferenceClass());
             ((ObjectLevelReadQuery) elQuery).setReferenceClass(descriptor.getJavaClass());
-            
+
             // TODO: Should this be set every time?
             if (elQuery.getDescriptor() != null) {
                 elQuery.setDescriptor(descriptor);
@@ -502,6 +499,13 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         }
     }
 
+    @Override
+    public void remove(Object entity) {
+        super.remove(entity);
+        if (entity instanceof EditionSet) {
+            EditionSetHelper.remove(this, (EditionSet) entity);
+        }         
+    }
 
     public String toString() {
         return "TemporalEntityManager@" + getEffectiveTime() + "[" + getEntityManager() + "]";

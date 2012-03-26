@@ -77,11 +77,4 @@ public abstract class BaseTemporalEntity<T extends TemporalEntity<?>> extends Ba
         return getContinuity() != null &&  getId() == getContinuity().getId();
     }
     
-    /**
-     * TODO
-     */
-    @SuppressWarnings("rawtypes")
-    public void applyEdition(TemporalEntity edition) {
-        
-    }
 }

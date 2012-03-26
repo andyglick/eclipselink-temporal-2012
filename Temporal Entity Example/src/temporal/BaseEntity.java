@@ -56,5 +56,5 @@ public abstract class BaseEntity {
     public long getVersion() {
         return version;
     }
-
+    
 }

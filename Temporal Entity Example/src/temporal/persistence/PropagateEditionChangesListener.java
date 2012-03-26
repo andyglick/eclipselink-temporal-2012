@@ -50,7 +50,7 @@ public class PropagateEditionChangesListener extends SessionEventAdapter {
         TemporalEntityManager tem = TemporalEntityManager.getInstance(uow);
         EditionSet es = tem.getEditionSet();
 
-        if (es != null && es.hasEntries() && uowCS.hasChanges()) {
+        if (tem.hasEditionSet() && tem.getEditionSet().hasChanges() && uowCS.hasChanges()) {
             for (EditionSetEntry entry : es.getEntries()) {
                 ObjectChangeSet objCS = uowCS.getCloneToObjectChangeSet().get(entry.getTemporal());
                 List<TemporalEntity<?>> futures = findFutureEditions(uow, entry);

@@ -88,7 +88,7 @@ public class Effectivity {
     }
 
     public String toString() {
-        return "Effectivity(" + getStart() + " - " + getEnd() + ")";
+        return "Effectivity(" + timeString(getStart()) + " - " + timeString(getEnd()) + ")";
     }
 
     public String toString(TemporalEntity<?> entity) {
@@ -104,7 +104,7 @@ public class Effectivity {
         return writer.toString();
     }
 
-    private String timeString(long ts) {
+    protected static String timeString(long ts) {
         if (ts == BOT) {
             return "BOT";
         }

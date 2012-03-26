@@ -15,6 +15,7 @@ package temporal;
 import java.util.HashSet;
 import java.util.Set;
 
+import javax.persistence.CascadeType;
 import javax.persistence.CollectionTable;
 import javax.persistence.Column;
 import javax.persistence.ElementCollection;
@@ -54,7 +55,7 @@ public class EditionSetEntry {
      * The {@link Temporal} or {@link TemporalEntity} that has been created or
      * modified
      */
-    @VariableOneToOne(fetch = FetchType.LAZY)
+    @VariableOneToOne(fetch = FetchType.LAZY, cascade=CascadeType.REMOVE)
     private Temporal temporal;
 
     /**
@@ -65,14 +66,17 @@ public class EditionSetEntry {
     @Column(name = "ATTRIBUTE")
     private Set<String> attributes = new HashSet<String>();
 
+    private boolean newTemporal = false;
+
     private EditionSetEntry() {
         super();
     }
 
-    public EditionSetEntry(EditionSet editionSet, Temporal temporal) {
+    public EditionSetEntry(EditionSet editionSet, Temporal temporal, boolean newTemporal) {
         this();
         this.editionSet = editionSet;
         this.temporal = temporal;
+        this.newTemporal = newTemporal;
     }
 
     public long getId() {
@@ -99,6 +103,14 @@ public class EditionSetEntry {
         if (!getAttributes().contains(attr)) {
             getAttributes().add(attr);
         }
+    }
+
+    public boolean isNew() {
+        return this.newTemporal;
+    }
+
+    public boolean hasChanges() {
+        return isNew() || !getAttributes().isEmpty();
     }
 
     @Override

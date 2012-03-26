@@ -59,7 +59,7 @@ public class EditionSetEventListener extends DescriptorEventAdapter implements D
         RepeatableWriteUnitOfWork uow = (RepeatableWriteUnitOfWork) event.getSession();
         UnitOfWorkChangeSet uowCS = (UnitOfWorkChangeSet) uow.getUnitOfWorkChangeSet();
 
-        if (es.hasEntries() && uowCS.hasChanges()) {
+        if (uowCS.hasChanges()) {
             for (EditionSetEntry entry : es.getEntries()) {
                 ObjectChangeSet objCS = uowCS.getCloneToObjectChangeSet().get(entry.getTemporal());
                 if (objCS != null && objCS.hasChanges()) {

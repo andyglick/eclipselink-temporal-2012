@@ -24,10 +24,10 @@ import org.eclipse.persistence.annotations.Customizer;
 import temporal.persistence.EditionSetEventListener;
 
 /**
- * An EditionSet represents a proposed set of future changes that should be performed
- * together at the same effective time. This is an optimisation in the model to
- * collect all changes for a future point and simplify committing them all
- * together as the current.
+ * An EditionSet represents a proposed set of future changes that should be
+ * performed together at the same effective time. This is an optimisation in the
+ * model to collect all changes for a future point and simplify committing them
+ * all together as the current.
  * 
  * @author dclarke
  * @since EclipseLink 2.3.1
@@ -39,12 +39,12 @@ import temporal.persistence.EditionSetEventListener;
 public class EditionSet {
 
     @Id
-    @Column(name="ID")
+    @Column(name = "ID")
     private long effective;
 
     private String description;
-    
-    @OneToMany(mappedBy="editionSet", cascade=CascadeType.ALL)
+
+    @OneToMany(mappedBy = "editionSet", cascade = CascadeType.ALL)
     private List<EditionSetEntry> entries = new ArrayList<EditionSetEntry>();
 
     private EditionSet() {
@@ -72,13 +72,24 @@ public class EditionSet {
         return entries;
     }
 
-    public EditionSetEntry add(Temporal temporalObject) {
-        EditionSetEntry entry = new EditionSetEntry(this, temporalObject);
+    public EditionSetEntry add(Temporal temporalObject, boolean newEntity) {
+        EditionSetEntry entry = new EditionSetEntry(this, temporalObject, newEntity);
         getEntries().add(entry);
         return entry;
     }
 
-    public boolean hasEntries() {
-        return !getEntries().isEmpty();
+    public boolean hasChanges() {
+        for (EditionSetEntry ese : getEntries()) {
+            if (ese.hasChanges()) {
+                return true;
+            }
+        }
+        return false;
     }
+
+    @Override
+    public String toString() {
+        return "EditionSet(" + Effectivity.timeString(getEffective()) + ")";
+    }
+
 }

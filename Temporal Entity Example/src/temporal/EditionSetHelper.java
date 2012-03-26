@@ -72,20 +72,26 @@ public class EditionSetHelper {
                 }
             }
         }
-        
-       continuity.applyEdition(edition);
+
+        // continuity.applyEdition(edition);
 
         continuity.getEffectivity().setEnd(edition.getEffectivity().getEnd());
     }
 
     /**
-     * TODO
+     * Remove and {@link EditionSet} along with all of its entries. Any future
+     * edition value propagation must be undone in this method.
      * 
-     * @param em
-     * @param editionSet
-     * @param effective
+     * @see TemporalEntityManager#remove(Object)
+     * @param temporalEntityManager
+     * @param entity
      */
-    public static void move(EntityManager em, EditionSet editionSet, long effective) {
-
+    protected static void remove(TemporalEntityManager em, EditionSet editionSet) {
+        System.out.println("EditionSetHelper.remove: " + editionSet);
+        
+        for (EditionSetEntry ese: editionSet.getEntries()) {
+            em.remove(ese.getTemporal());
+        }
     }
+
 }

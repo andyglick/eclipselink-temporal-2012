@@ -186,7 +186,6 @@ public class PersonEntity extends BaseTemporalEntity<Person> implements Person {
     }
 
     @SuppressWarnings("rawtypes")
-    @Override
     public void applyEdition(TemporalEntity edition) {
        Person personEdition = (Person) edition;
        
