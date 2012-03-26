@@ -1,6 +1,0 @@
-<weblogic-application>
-    <prefer-application-packages>
-        <package-name>org.eclipse.persistence.*</package-name>
-        <package-name>commonj.sdo.*</package-name>
-    </prefer-application-packages>
-</weblogic-application>

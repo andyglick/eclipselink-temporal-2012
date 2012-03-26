@@ -10,10 +10,14 @@
  ******************************************************************************/
 package tests;
 
+import java.util.HashMap;
+import java.util.Map;
+
 import javax.persistence.EntityManager;
 import javax.persistence.EntityManagerFactory;
 import javax.persistence.Persistence;
 
+import org.eclipse.persistence.config.PersistenceUnitProperties;
 import org.eclipse.persistence.jpa.JpaHelper;
 import org.eclipse.persistence.sessions.server.Server;
 import org.eclipse.persistence.tools.schemaframework.SchemaManager;
@@ -42,7 +46,16 @@ public abstract class BaseTestCase {
 
     public EntityManagerFactory getEMF() {
         if (emf == null) {
-            emf = Persistence.createEntityManagerFactory("example");
+            
+            Map<String, Object> properties = new HashMap<String, Object>();
+            properties.put(PersistenceUnitProperties.TRANSACTION_TYPE, "RESOURCE_LOCAL");
+            properties.put(PersistenceUnitProperties.NON_JTA_DATASOURCE, "");
+            properties.put(PersistenceUnitProperties.JDBC_DRIVER, "com.mysql.jdbc.Driver");
+            properties.put(PersistenceUnitProperties.JDBC_URL, "jdbc:mysql://localhost:3306/test");
+            properties.put(PersistenceUnitProperties.JDBC_USER, "root");
+            properties.put(PersistenceUnitProperties.JDBC_PASSWORD, "password");
+            
+            emf = Persistence.createEntityManagerFactory("example", properties);
 
             Server session = JpaHelper.getServerSession(emf);
 

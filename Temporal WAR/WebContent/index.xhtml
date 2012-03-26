@@ -2,18 +2,22 @@
     "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
 
 <html xmlns="http://www.w3.org/1999/xhtml"
-    xmlns:ui="http://java.sun.com/jsf/facelets"
-    xmlns:h="http://java.sun.com/jsf/html"
-    xmlns:f="http://java.sun.com/jsf/core">
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core">
 
-<f:loadBundle basename="resources.application" var="msg"/>
+<f:loadBundle basename="resources.application" var="msg" />
 
 <head>
-    <title>Temporal Example</title>
+<title>Temporal Example</title>
 </head>
 
 <body>
-<h1>Temporal Example</h1>
-<p></p>
+	<h1>Temporal Example</h1>
+	<p>
+		<h:form>
+			<h:outputText value="#{persistenceBean.name}" />
+		</h:form>
+	</p>
 </body>
 </html>
