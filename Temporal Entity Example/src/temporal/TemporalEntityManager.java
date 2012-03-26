@@ -80,6 +80,7 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         if (TemporalEntityManager.class == em.getClass()) {
             return (TemporalEntityManager) em;
         }
+        em.getEntityManagerFactory();
         TemporalEntityManager tem = (TemporalEntityManager) em.getProperties().get(TEMPORAL_EM_PROPERTY);
         if (tem == null) {
             tem = new TemporalEntityManager(em);
