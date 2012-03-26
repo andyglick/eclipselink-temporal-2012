@@ -1,0 +1,6 @@
+<application>
+    <display-name>org.eclipse.persistence2_3_1_v20111018-r10243-shared-lib</display-name>
+    <module>
+        <java></java>
+    </module>
+</application>
