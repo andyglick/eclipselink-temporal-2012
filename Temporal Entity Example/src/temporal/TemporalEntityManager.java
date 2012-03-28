@@ -28,7 +28,6 @@ import org.eclipse.persistence.internal.descriptors.InstanceVariableAttributeAcc
 import org.eclipse.persistence.internal.descriptors.MethodAttributeAccessor;
 import org.eclipse.persistence.internal.sessions.AbstractSession;
 import org.eclipse.persistence.internal.sessions.RepeatableWriteUnitOfWork;
-import org.eclipse.persistence.jpa.JpaHelper;
 import org.eclipse.persistence.mappings.AggregateObjectMapping;
 import org.eclipse.persistence.mappings.CollectionMapping;
 import org.eclipse.persistence.mappings.DatabaseMapping;
@@ -486,17 +485,13 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
      * correct target entity or edition
      */
     private void updateTemporalQuery(Query query) {
-        DatabaseQuery elQuery = JpaHelper.getDatabaseQuery(query);
+        DatabaseQuery elQuery = query.unwrap(DatabaseQuery.class);
 
         if (hasEffectiveTime() && TemporalHelper.isTemporalEntity(elQuery.getReferenceClass())) {
             RepeatableWriteUnitOfWork uow = getUnitOfWork();
             ClassDescriptor descriptor = DescriptorHelper.getEditionDescriptor(uow, elQuery.getReferenceClass());
             ((ObjectLevelReadQuery) elQuery).setReferenceClass(descriptor.getJavaClass());
-
-            // TODO: Should this be set every time?
-            if (elQuery.getDescriptor() != null) {
-                elQuery.setDescriptor(descriptor);
-            }
+            elQuery.setDescriptor(descriptor);
         }
     }
 
@@ -505,7 +500,7 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         super.remove(entity);
         if (entity instanceof EditionSet) {
             EditionSetHelper.remove(this, (EditionSet) entity);
-        }         
+        }
     }
 
     public String toString() {

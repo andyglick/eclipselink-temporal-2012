@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project-modules id="moduleCoreId" project-version="1.5.0">
+    <wb-module deploy-name="Temporal EJB">
+        <wb-resource deploy-path="/" source-path="/ejbModule" tag="defaultRootSource"/>
+        <property name="java-output-path" value="/Temporal EJB/build/classes"/>
+        <property name="ClientProject" value="Temporal EJBClient"/>
+        <property name="ClientJARURI" value="Temporal_EJBClient.jar"/>
+    </wb-module>
+</project-modules>

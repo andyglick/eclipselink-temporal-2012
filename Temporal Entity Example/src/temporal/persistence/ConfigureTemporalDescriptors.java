@@ -126,8 +126,8 @@ public class ConfigureTemporalDescriptors implements SessionCustomizer {
                 }
 
                 // TODO: Configure Wrapper policies
-                //current.setWrapperPolicy(new EditionWrapperPolicy());
-                //editionDesc.setWrapperPolicy(new EditionWrapperPolicy());
+                // current.setWrapperPolicy(new EditionWrapperPolicy());
+                // editionDesc.setWrapperPolicy(new EditionWrapperPolicy());
             }
         }
 
@@ -151,6 +151,9 @@ public class ConfigureTemporalDescriptors implements SessionCustomizer {
 
         session.getEventManager().addListener(new PropagateEditionChangesListener());
 
+        // Disable the JPQL parse cache so that queries are evaluated against
+        // their type with effectivity and not just based on previous queries.
+        session.getProject().setJPQLParseCacheMaxSize(0);
     }
 
     /**

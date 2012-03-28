@@ -1,39 +1,55 @@
+/*******************************************************************************
+ * Copyright (c) 2011-2012 Oracle. All rights reserved.
+ * This program and the accompanying materials are made available under the 
+ * terms of the Eclipse Public License v1.0 and Eclipse Distribution License v. 1.0 
+ * which accompanies this distribution. 
+ * The Eclipse Public License is available at http://www.eclipse.org/legal/epl-v10.html
+ * and the Eclipse Distribution License is available at 
+ * http://www.eclipse.org/org/documents/edl-v10.php.
+ *
+ * Contributors:
+ *      dclarke - Bug 361016: Future Versions Examples
+ ******************************************************************************/
 package temporal.web;
 
 import java.util.List;
 
+import javax.ejb.EJB;
 import javax.faces.bean.ManagedBean;
-import javax.faces.bean.SessionScoped;
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
+
+import temporal.ejb.PersonService;
 
 import model.Person;
 
-import org.eclipse.persistence.internal.weaving.PersistenceWeaved;
-
 @ManagedBean
-@SessionScoped
 public class PersistenceBean {
 
-    @PersistenceContext(unitName = "example")
-    private EntityManager entityManager;
+    private List<Person> current;
 
-    public String getName() {
+    private List<Person> atT2;
+    
+    @EJB
+    private PersonService service;
 
-        List<Person> persons = getEntityManager().createQuery("SELECT p FROM Person p").getResultList();
+    public PersonService getService() {
+        return service;
+    }
 
-        if (!persons.isEmpty()) {
-            return persons.get(0).getName() + " - weaving: " + (persons.get(0) instanceof PersistenceWeaved);
+    public void setService(PersonService service) {
+        this.service = service;
+    }
+
+    public List<Person> getCurrent() {
+        if (this.current == null) {
+            this.current = getService().getAllCurrent();
         }
-        return "No Person instances found";
+        return this.current;
     }
 
-    public EntityManager getEntityManager() {
-        return entityManager;
+    public List<Person> getAtT2() {
+        if (this.atT2 == null) {
+            this.atT2 = getService().getAllAtT2();
+        }
+        return this.atT2;
     }
-
-    public void setEntityManager(EntityManager entityManager) {
-        this.entityManager = entityManager;
-    }
-
 }

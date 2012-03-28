@@ -5,6 +5,7 @@
 	<projects>
 		<project>Temporal Entity Example</project>
 		<project>Temporal WAR</project>
+		<project>Temporal EJB</project>
 	</projects>
 	<buildSpec>
 		<buildCommand>

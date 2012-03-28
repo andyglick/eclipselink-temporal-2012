@@ -14,9 +14,62 @@
 
 <body>
 	<h1>Temporal Example</h1>
+
 	<p>
 		<h:form>
-			<h:outputText value="#{persistenceBean.name}" />
+			<h:dataTable var="person" value="#{persistenceBean.current}"
+				border="1" bgcolor="whitesmoke" width="400">
+				<f:facet name="header">
+					<h:outputText value="Current Person(s)"></h:outputText>
+				</f:facet>
+				<h:column>
+					<f:facet name="header">ID</f:facet>
+					<h:outputText value="#{person.id}"></h:outputText>
+				</h:column>
+				<h:column>
+					<f:facet name="header">NAME</f:facet>
+					<h:outputText value="#{person.name}"></h:outputText>
+				</h:column>
+				<h:column>
+					<f:facet name="header">DOB</f:facet>
+					<h:outputText value="#{person.dateOfBirth}"></h:outputText>
+				</h:column>
+				<h:column>
+					<f:facet name="header">Effectivity</f:facet>
+					<h:outputText value="#{person.effectivity}"></h:outputText>
+				</h:column>
+			</h:dataTable>
+		</h:form>
+	</p>
+	<p>
+		<h:form>
+			<h:dataTable value="#{persistenceBean.atT2}" var="person"
+				bgcolor="whitesmoke" border="2" width="400">
+				<f:facet name="header">
+					<h:outputText value="Future Person Editions"></h:outputText>
+				</f:facet>
+				<h:column>
+					<f:facet name="header">CID</f:facet>
+					<h:outputText value="#{person.continuityId}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">ID</f:facet>
+					<h:outputText value="#{person.id}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">Name</f:facet>
+					<h:outputText value="#{person.name}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">DOB</f:facet>
+					<h:outputText value="#{person.dateOfBirth}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">Effectivity</f:facet>
+					<h:outputText value="#{person.effectivity}" />
+				</h:column>
+			</h:dataTable>
+
 		</h:form>
 	</p>
 </body>
