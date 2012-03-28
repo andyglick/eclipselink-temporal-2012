@@ -1,0 +1,36 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" 
+    "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+
+<html xmlns="http://www.w3.org/1999/xhtml"
+	xmlns:ui="http://java.sun.com/jsf/facelets"
+	xmlns:h="http://java.sun.com/jsf/html"
+	xmlns:f="http://java.sun.com/jsf/core">
+
+<f:loadBundle basename="resources.application" var="msg" />
+
+<head>
+<title>Temporal Example</title>
+</head>
+
+<body>
+	<h1>Temporal Example</h1>
+
+	<p>
+		<h:form>
+
+			<h:panelGrid columns="2" border="1">
+				<h:outputText value="Id:"></h:outputText>
+				<h:inputText id="id" value="#{createEditionBean.id}" />
+				<h:outputText value="Effective:"></h:outputText>
+				<h:inputText id="effective" value="#{createEditionBean.effective}" />
+				<h:outputText value="Name:"></h:outputText>
+				<h:inputText id="name" value="#{createEditionBean.name}" />
+				<f:facet name="footer" >
+					<h:commandButton action="#{createEditionBean.create}"
+						value="Create" />
+				</f:facet>
+			</h:panelGrid>
+		</h:form>
+	</p>
+</body>
+</html>

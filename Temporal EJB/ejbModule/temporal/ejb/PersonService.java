@@ -24,4 +24,8 @@ public interface PersonService {
     List<Person> getAllCurrent();
 
     List<Person> getAllAtT2();
+
+    List<Person> getAllEditions();
+
+    void create(long id, String name, long effective);
 }

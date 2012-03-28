@@ -17,6 +17,8 @@
 
 	<p>
 		<h:form>
+		
+		
 			<h:dataTable var="person" value="#{persistenceBean.current}"
 				border="1" bgcolor="whitesmoke" width="400">
 				<f:facet name="header">
@@ -46,7 +48,7 @@
 			<h:dataTable value="#{persistenceBean.atT2}" var="person"
 				bgcolor="whitesmoke" border="2" width="400">
 				<f:facet name="header">
-					<h:outputText value="Future Person Editions"></h:outputText>
+					<h:outputText value="Future Person Editions @T2"></h:outputText>
 				</f:facet>
 				<h:column>
 					<f:facet name="header">CID</f:facet>
@@ -70,7 +72,34 @@
 				</h:column>
 			</h:dataTable>
 
+			<h:dataTable value="#{persistenceBean.allEditions}" var="person"
+				bgcolor="whitesmoke" border="2" width="400">
+				<f:facet name="header">
+					<h:outputText value="All Future Person Editions"></h:outputText>
+				</f:facet>
+				<h:column>
+					<f:facet name="header">CID</f:facet>
+					<h:outputText value="#{person.continuityId}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">ID</f:facet>
+					<h:outputText value="#{person.id}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">Name</f:facet>
+					<h:outputText value="#{person.name}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">DOB</f:facet>
+					<h:outputText value="#{person.dateOfBirth}" />
+				</h:column>
+				<h:column>
+					<f:facet name="header">Effectivity</f:facet>
+					<h:outputText value="#{person.effectivity}" />
+				</h:column>
+			</h:dataTable>
 		</h:form>
+
 	</p>
 </body>
 </html>

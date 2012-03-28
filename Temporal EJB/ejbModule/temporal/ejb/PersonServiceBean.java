@@ -15,6 +15,8 @@ package temporal.ejb;
 import java.util.List;
 
 import javax.ejb.Stateless;
+import javax.ejb.TransactionAttribute;
+import javax.ejb.TransactionAttributeType;
 import javax.persistence.EntityManager;
 import javax.persistence.PersistenceContext;
 import javax.persistence.TypedQuery;
@@ -63,5 +65,28 @@ public class PersonServiceBean implements PersonService {
         tem.setEffectiveTime(PersonModelExample.T2);
 
         return tem.createQuery("SELECT p FROM Person p", Person.class).getResultList();
+    }
+
+    @TransactionAttribute(TransactionAttributeType.REQUIRED)
+    public void create(long id, String name, long effective) {
+        TemporalEntityManager tem = TemporalEntityManager.getInstance(getEntityManager());
+        tem.setEffectiveTime(effective);
+        
+        Person effectivePerson = tem.find(Person.class, id);
+        
+        if (effectivePerson == null) {
+            throw new IllegalArgumentException("No current person found for id: " + id);
+        }
+        if (effectivePerson.getEffectivity().getStart() < effective) {
+            Person editionPerson = tem.newEdition(effectivePerson);
+            editionPerson.setName(name);
+        }
+    }
+
+    @Override
+    public List<Person> getAllEditions() {
+        TemporalEntityManager tem = TemporalEntityManager.getInstance(getEntityManager());
+
+        return tem.createQuery("SELECT p FROM PersonEditionView p", Person.class).getResultList();
     }
 }

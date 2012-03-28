@@ -1,2 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<pageflow:Pageflow xmlns:pageflow="http://www.sybase.com/suade/pageflow" id="pf13327765718510" configfile="/Temporal WAR/WebContent/WEB-INF/faces-config.xml"/>
+<pageflow:Pageflow xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:pageflow="http://www.sybase.com/suade/pageflow" id="pf13327765718510" configfile="/Temporal WAR/WebContent/WEB-INF/faces-config.xml">
+  <nodes xsi:type="pageflow:PFPage" name="index.xhtml" x="203" y="228" id="pf13329388041990" inlinks="pf13329388041991" path="/index.xhtml"/>
+  <nodes xsi:type="pageflow:PFPage" name="create-edition.xhtml" x="742" y="277" id="pf13329388041992" outlinks="pf13329388041991" path="/create-edition.xhtml"/>
+  <links id="pf13329388041991" target="pf13329388041990" source="pf13329388041992" outcome="success"/>
+</pageflow:Pageflow>

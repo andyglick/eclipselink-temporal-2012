@@ -12,23 +12,21 @@
  ******************************************************************************/
 package temporal.web;
 
-import java.util.List;
-
 import javax.ejb.EJB;
 import javax.faces.bean.ManagedBean;
 
+import model.Person;
 import temporal.ejb.PersonService;
 
-import model.Person;
-
 @ManagedBean
-public class PersistenceBean {
+public class CreateEditionBean {
 
-    private List<Person> current;
-
-    private List<Person> atT2;
+    private long id;
     
-    private List<Person> allEditions;
+    private String name;
+    
+    private long effective;
+
     @EJB
     private PersonService service;
 
@@ -40,24 +38,32 @@ public class PersistenceBean {
         this.service = service;
     }
 
-    public List<Person> getCurrent() {
-        if (this.current == null) {
-            this.current = getService().getAllCurrent();
-        }
-        return this.current;
+    public long getId() {
+        return id;
     }
 
-    public List<Person> getAtT2() {
-        if (this.atT2 == null) {
-            this.atT2 = getService().getAllAtT2();
-        }
-        return this.atT2;
+    public void setId(long id) {
+        this.id = id;
     }
 
-    public List<Person> getAllEditions() {
-        if (this.allEditions == null) {
-            this.allEditions = getService().getAllEditions();
-        }
-        return this.allEditions;
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public long getEffective() {
+        return effective;
+    }
+
+    public void setEffective(long effective) {
+        this.effective = effective;
+    }
+
+    public String create() {
+        getService().create(getId(), getName(), getEffective());
+        return "success";
     }
 }

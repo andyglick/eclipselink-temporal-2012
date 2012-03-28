@@ -233,9 +233,7 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
 
         // Flush the transaction so that any changes made to the new edition are
         // tracked and the EditionSet can be properly populated at commit.
-        if (getEntityManager().getTransaction().isActive()) {
-            getEntityManager().flush();
-        }
+        getEntityManager().flush();
 
         if (editionDesc.hasWrapperPolicy() && !editionDesc.getWrapperPolicy().isWrapped(edition)) {
             edition = (TemporalEntity<T>) editionDesc.getWrapperPolicy().wrapObject(edition, session);
