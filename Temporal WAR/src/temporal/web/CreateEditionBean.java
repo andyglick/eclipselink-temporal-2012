@@ -15,7 +15,6 @@ package temporal.web;
 import javax.ejb.EJB;
 import javax.faces.bean.ManagedBean;
 
-import model.Person;
 import temporal.ejb.PersonService;
 
 @ManagedBean
@@ -64,6 +63,6 @@ public class CreateEditionBean {
 
     public String create() {
         getService().create(getId(), getName(), getEffective());
-        return "success";
+        return "index?faces-redirect=true";
     }
 }

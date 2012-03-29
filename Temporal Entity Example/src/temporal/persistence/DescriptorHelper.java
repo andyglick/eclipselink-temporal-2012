@@ -98,20 +98,24 @@ public class DescriptorHelper {
     public static ClassDescriptor getEditionDescriptor(Session session, Class<?> entityClass) {
         return getDescriptor(session, entityClass, EDITION);
     }
-    
+
+    public static ClassDescriptor getEditionViewDescriptor(Session session, Class<?> entityClass) {
+        return getDescriptor(session, entityClass, EDITION_VIEW);
+    }
+
     /**
-     * TODO
+     * Lookup the descriptor based on the object taking into account the
+     * possibility of wrappers being used.
      */
     public static ClassDescriptor getClassDescriptor(Session session, Object entity) {
         Object domainObject = entity;
-        
+
         if (Proxy.isProxyClass(entity.getClass())) {
             InvocationHandler handler = Proxy.getInvocationHandler(entity);
-            
+
             if (handler instanceof EditionWrapperPolicy.Handler<?>) {
                 domainObject = ((EditionWrapperPolicy.Handler<?>) handler).getEntity();
-            }
-            else            if (handler instanceof CurrentWrapperPolicy.CurrentWrapperHandler) {
+            } else if (handler instanceof CurrentWrapperPolicy.CurrentWrapperHandler) {
                 domainObject = ((CurrentWrapperPolicy.CurrentWrapperHandler<?>) handler).getEntity();
             }
         }

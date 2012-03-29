@@ -27,13 +27,18 @@ import static temporal.Effectivity.BOT;
 import static temporal.Effectivity.EOT;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
+import javax.persistence.TypedQuery;
 
 import junit.framework.Assert;
 import model.Person;
 import model.PersonHobby;
 
+import org.eclipse.persistence.descriptors.ClassDescriptor;
 import org.eclipse.persistence.internal.sessions.RepeatableWriteUnitOfWork;
+import org.eclipse.persistence.queries.ObjectLevelReadQuery;
 import org.eclipse.persistence.sessions.DatabaseSession;
+import org.eclipse.persistence.sessions.Session;
 import org.eclipse.persistence.sessions.UnitOfWork;
 import org.eclipse.persistence.sessions.server.ClientSession;
 import org.eclipse.persistence.sessions.server.Server;
@@ -41,6 +46,7 @@ import org.junit.Test;
 
 import temporal.EditionSet;
 import temporal.TemporalEntityManager;
+import temporal.persistence.DescriptorHelper;
 import tests.BaseTestCase;
 
 /**
@@ -189,7 +195,7 @@ public class TemporalEntityManagerTests extends BaseTestCase {
         TemporalEntityManager em = getEntityManager();
         em.setEffectiveTime(T3);
         EditionSet esT3 = em.getEditionSet();
-        
+
         em.getTransaction().begin();
 
         Person newPersonAtT3 = em.newEntity(Person.class);
@@ -199,10 +205,10 @@ public class TemporalEntityManagerTests extends BaseTestCase {
 
         em.setEffectiveTime(T4);
         EditionSet esT4 = em.getEditionSet();
-        
+
         Assert.assertFalse(esT4.hasChanges());
         Assert.assertTrue(esT3.hasChanges());
-        
+
         em.flush();
     }
 
@@ -220,5 +226,75 @@ public class TemporalEntityManagerTests extends BaseTestCase {
 
         // TODO : ?
         em.getTransaction().rollback();
+    }
+
+    /**
+     * Verify proper query construction using interface alias. The concrete type
+     * queried will depend on the state (effective time) of the
+     * {@link TemporalEntityManager}
+     */
+    @Test
+    public void createQuery_Person() {
+        TemporalEntityManager em = getEntityManager();
+
+        // Current Query
+        TypedQuery<Person> query = em.createQuery("SELECT p FROM Person p", Person.class);
+        Assert.assertNotNull(query);
+        ClassDescriptor desc = DescriptorHelper.getCurrentDescriptor(em.unwrap(Session.class), Person.class);
+        Assert.assertSame(desc.getJavaClass(), query.unwrap(ObjectLevelReadQuery.class).getReferenceClass());
+        Assert.assertSame(desc, query.unwrap(ObjectLevelReadQuery.class).getDescriptor());
+
+        // Edition Query
+        em.setEffectiveTime(T1);
+        query = em.createQuery("SELECT p FROM Person p", Person.class);
+        Assert.assertNotNull(query);
+        desc = DescriptorHelper.getEditionDescriptor(em.unwrap(Session.class), Person.class);
+        Assert.assertSame(desc.getJavaClass(), query.unwrap(ObjectLevelReadQuery.class).getReferenceClass());
+        Assert.assertSame(desc, query.unwrap(ObjectLevelReadQuery.class).getDescriptor());
+
+        // Current Query again
+        em.clearEffectiveTime();
+        query = em.createQuery("SELECT p FROM Person p", Person.class);
+        Assert.assertNotNull(query);
+        desc = DescriptorHelper.getCurrentDescriptor(em.unwrap(Session.class), Person.class);
+        Assert.assertSame(desc.getJavaClass(), query.unwrap(ObjectLevelReadQuery.class).getReferenceClass());
+        Assert.assertSame(desc, query.unwrap(ObjectLevelReadQuery.class).getDescriptor());
+    }
+
+    @Test
+    public void createQuery_PersonEdition() {
+        TemporalEntityManager em = getEntityManager();
+
+        // Current Query
+        TypedQuery<Person> query = em.createQuery("SELECT p FROM PersonEdition p", Person.class);
+        Assert.assertNotNull(query);
+        ClassDescriptor desc = DescriptorHelper.getEditionDescriptor(em.unwrap(Session.class), Person.class);
+        Assert.assertSame(desc.getJavaClass(), query.unwrap(ObjectLevelReadQuery.class).getReferenceClass());
+        Assert.assertSame(desc, query.unwrap(ObjectLevelReadQuery.class).getDescriptor());
+    }
+
+    @Test
+    public void createQuery_PersonEditionView() {
+        TemporalEntityManager em = getEntityManager();
+
+        // Current Query
+        TypedQuery<Person> query = em.createQuery("SELECT p FROM PersonEditionView p", Person.class);
+        Assert.assertNotNull(query);
+        ClassDescriptor desc = DescriptorHelper.getEditionViewDescriptor(em.unwrap(Session.class), Person.class);
+        Assert.assertSame(desc.getJavaClass(), query.unwrap(ObjectLevelReadQuery.class).getReferenceClass());
+        Assert.assertSame(desc, query.unwrap(ObjectLevelReadQuery.class).getDescriptor());
+    }
+
+    /**
+     * Ensure the find of a non-existent edition returns null and not the
+     * {@link NoResultException} thrown by the .find named query execution.
+     */
+    @Test
+    public void findNonExistent() {
+        TemporalEntityManager em = getEntityManager();
+        em.setEffectiveTime(T3);
+
+        Person result = em.find(Person.class, 123456789l);
+        Assert.assertNull(result);
     }
 }

@@ -611,6 +611,7 @@ public class FullPersonWithEditions extends BaseTestCase {
         Assert.assertNotNull(es);
         Assert.assertTrue(es.getEntries().isEmpty());
 
+        em.getTransaction().begin();
         Person pAtT5 = em.newEdition(pEdition);
 
         Assert.assertNotNull(pAtT5);

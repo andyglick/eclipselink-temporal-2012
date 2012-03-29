@@ -19,6 +19,7 @@ import static temporal.persistence.DescriptorHelper.getEditionDescriptor;
 import java.lang.reflect.Member;
 
 import javax.persistence.EntityManager;
+import javax.persistence.NoResultException;
 import javax.persistence.Query;
 import javax.persistence.TypedQuery;
 import javax.persistence.criteria.CriteriaQuery;
@@ -439,7 +440,11 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
             Query query = createNamedQuery(descriptor.getAlias() + ".find");
             query.setParameter("ID", primaryKey);
 
-            return (T) query.getSingleResult();
+            try {
+                return (T) query.getSingleResult();
+            } catch (NoResultException nre) {
+                return null;
+            }
         }
 
         return (T) super.find(entityClass, primaryKey);

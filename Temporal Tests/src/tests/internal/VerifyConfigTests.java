@@ -233,5 +233,15 @@ public class VerifyConfigTests extends BaseTestCase {
 
         // TODO: Verify FK fields
     }
+    
+    /**
+     * Important that JPQL caching is disabled to ensure 
+     */
+    @Test
+    public void verifyJPQLCcaheingDisabled() {
+        Server session = JpaHelper.getServerSession(getEMF());
+        Assert.assertEquals(0, session.getProject().getJPQLParseCacheMaxSize());
+    }
+
 
 }

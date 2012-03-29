@@ -40,6 +40,7 @@
 					<f:facet name="header">Effectivity</f:facet>
 					<h:outputText value="#{person.effectivity}"></h:outputText>
 				</h:column>
+				<f:facet name="footer"><div align="right"><h:commandLink action="create-edition" value="Create"/></div></f:facet>
 			</h:dataTable>
 		</h:form>
 	</p>
@@ -71,9 +72,9 @@
 					<h:outputText value="#{person.effectivity}" />
 				</h:column>
 			</h:dataTable>
-
+<p/>
 			<h:dataTable value="#{persistenceBean.allEditions}" var="person"
-				bgcolor="whitesmoke" border="2" width="400">
+				bgcolor="whitesmoke" border="2" width="600">
 				<f:facet name="header">
 					<h:outputText value="All Future Person Editions"></h:outputText>
 				</f:facet>
@@ -96,6 +97,10 @@
 				<h:column>
 					<f:facet name="header">Effectivity</f:facet>
 					<h:outputText value="#{person.effectivity}" />
+				</h:column>
+				<h:column>
+					<h:commandButton value="Edit"/>
+					<h:commandButton value="Delete"/>
 				</h:column>
 			</h:dataTable>
 		</h:form>
