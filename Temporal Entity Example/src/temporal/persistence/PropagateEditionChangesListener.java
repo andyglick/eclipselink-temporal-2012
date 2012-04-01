@@ -80,7 +80,7 @@ public class PropagateEditionChangesListener extends SessionEventAdapter {
         if (desc != null) {
             ReadAllQuery raq = new ReadAllQuery(desc.getJavaClass());
             ExpressionBuilder eb = raq.getExpressionBuilder();
-            Expression cidExp = eb.get("cid").equal(entry.getTemporalEntity().getContinuity().getId());
+            Expression cidExp = eb.get("cid").equal(entry.getTemporalEntity().getContinuityId());
             Expression startExp = eb.get("effectivity").get("start");
             Expression futureExp = startExp.greaterThan(entry.getEditionSet().getEffective());
             raq.setSelectionCriteria(cidExp.and(futureExp));
@@ -97,6 +97,13 @@ public class PropagateEditionChangesListener extends SessionEventAdapter {
      */
     private void propogateChanges(RepeatableWriteUnitOfWork uow, List<TemporalEntity<?>> futures, EditionSetEntry entry, ChangeRecord record) {
         if (!futures.isEmpty() && !(record instanceof DirectToFieldChangeRecord)) {
+            // Ignore if future edition view is myself
+            if (futures.size() == 1) {
+                TemporalEntity<?> future = futures.get(0);
+                if (future.getId() == entry.getTemporalEntity().getId()) {
+                    return;
+                }
+            }
             throw new UnsupportedOperationException("Only direct mapping changes can be propagated");
         }
 

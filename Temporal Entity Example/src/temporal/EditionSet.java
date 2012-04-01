@@ -60,6 +60,10 @@ public class EditionSet {
         return effective;
     }
 
+    protected void setEffective(long effective) {
+        this.effective = effective;
+    }
+
     public String getDescription() {
         return description;
     }
@@ -87,9 +91,30 @@ public class EditionSet {
         return false;
     }
 
+
+    protected EditionSetEntry get(Temporal temporal) {
+        for (EditionSetEntry ese: getEntries()) {
+            if (ese.getTemporal().equals(temporal)) {
+                return ese;
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Remove the provided entity and its associated {@link EditionSetEntry}.
+     * TODO: Throw exception if no ESE found
+     */
+    protected EditionSetEntry remove(Temporal temporal) {
+        EditionSetEntry ese = get(temporal);
+        if (ese != null) {
+            getEntries().remove(ese);
+        }
+        return ese;
+    }
+
     @Override
     public String toString() {
         return "EditionSet(" + Effectivity.timeString(getEffective()) + ")";
     }
-
 }

@@ -95,6 +95,10 @@ public class EditionSetEntry {
         return editionSet;
     }
 
+    protected void setEditionSet(EditionSet editionSet) {
+        this.editionSet = editionSet;
+    }
+
     public Set<String> getAttributes() {
         return attributes;
     }

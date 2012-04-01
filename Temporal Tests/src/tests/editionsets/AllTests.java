@@ -20,6 +20,8 @@ import org.junit.runners.Suite.SuiteClasses;
                 ApplySimpleEditionSetTests.class, 
                 MoveSingleEditionSetTests.class,
                 DeleteEditionSetTests.class,
-                PropagateChangesTests.class})
+                PropagateChangesTests.class,
+                PropagateDeleteChangesTests.class,
+                BrokenTemporalReferenceTests.class})
 public class AllTests {
 }

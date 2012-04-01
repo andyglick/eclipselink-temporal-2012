@@ -46,10 +46,8 @@ public class EditionSetHelper {
     public static void apply(EntityManager em, EditionSet editionSet) {
         for (EditionSetEntry ese : editionSet.getEntries()) {
             copyValues(em, ese);
-
-            em.remove(ese.getTemporal());
-
         }
+        em.remove(editionSet);
     }
 
     public static void copyValues(EntityManager em, EditionSetEntry entry) {
@@ -79,19 +77,35 @@ public class EditionSetHelper {
     }
 
     /**
-     * Remove and {@link EditionSet} along with all of its entries. Any future
-     * edition value propagation must be undone in this method.
+     * Move the provided {@link EditionSet} to the new effective time
      * 
-     * @see TemporalEntityManager#remove(Object)
-     * @param temporalEntityManager
-     * @param entity
+     * @throws IllegalArgumentException
+     *             for invalid effective time or mismatched
+     *             {@link TemporalEntityManager} and {@link EditionSet}
      */
-    protected static void remove(TemporalEntityManager em, EditionSet editionSet) {
-        System.out.println("EditionSetHelper.remove: " + editionSet);
-        
-        for (EditionSetEntry ese: editionSet.getEntries()) {
-            em.remove(ese.getTemporal());
+    public static EditionSet move(TemporalEntityManager em, EditionSet es, long effective) {
+        if (effective <= Effectivity.BOT) {
+            throw new IllegalArgumentException("Invalid effective time for move: " + effective);
         }
+        if (es == null || !es.equals(em.getEditionSet())) {
+            throw new IllegalArgumentException("Invalid TemporalEntitymanager or EditionSet: " + em + "::" + es);
+        }
+        
+        EditionSet newES = new EditionSet(effective);
+        em.persist(newES);
+        
+        for (EditionSetEntry entry : es.getEntries()) {
+            // TODO: Look for conflicts
+            entry.getTemporal().getEffectivity().setStart(effective);
+            newES.getEntries().add(entry);
+            entry.setEditionSet(newES);
+        }
+        es.getEntries().clear();
+        em.remove(es);
+        
+        em.setEditionSet(newES);
+        
+        return newES;
     }
 
 }

@@ -163,6 +163,11 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         return this.editionSet;
     }
 
+    protected void setEditionSet(EditionSet editionSet) {
+        this.editionSet = editionSet;
+        this.effective = editionSet.getEffective();
+    }
+
     public boolean hasEditionSet() {
         return this.editionSet != null;
     }
@@ -500,10 +505,16 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
 
     @Override
     public void remove(Object entity) {
-        super.remove(entity);
-        if (entity instanceof EditionSet) {
-            EditionSetHelper.remove(this, (EditionSet) entity);
+        if (entity instanceof Temporal && hasEditionSet()) {
+            EditionSetEntry ese = getEditionSet().remove((Temporal) entity);
+            if (ese != null) {
+                super.remove(ese);
+            }
         }
+        if (entity instanceof TemporalEntity<?>) {
+            ((TemporalEntity<?>) entity).setContinuity(null);
+        }
+        super.remove(entity);
     }
 
     public String toString() {

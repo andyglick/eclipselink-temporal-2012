@@ -17,6 +17,7 @@ import static example.PersonModelExample.T2;
 import static example.PersonModelExample.T4;
 import static example.PersonModelExample.T5;
 import static temporal.Effectivity.BOT;
+import static temporal.Effectivity.EOT;
 
 import java.util.List;
 
@@ -79,8 +80,8 @@ public class DeleteEditionSetTests extends BaseTestCase {
         Assert.assertEquals(T2, ph.getEffectivity().getStart());
         Assert.assertEquals(PersonModelExample.GOLF, ph.getName());
         Assert.assertEquals(PersonModelExample.GOLF, ph.getHobby().getName());
-        
-        //Assert.assertSame(p, ph.getPerson());
+
+        // Assert.assertSame(p, ph.getPerson());
 
         Assert.assertEquals(1, p.getPersonHobbies().size());
 
@@ -114,14 +115,14 @@ public class DeleteEditionSetTests extends BaseTestCase {
         Assert.assertEquals(T4, ph.getEffectivity().getStart());
         Assert.assertEquals(PersonModelExample.RUN, ph.getName());
         Assert.assertEquals(PersonModelExample.RUN, ph.getHobby().getName());
-        //Assert.assertSame(p, ph.getPerson());
+        // Assert.assertSame(p, ph.getPerson());
 
         Assert.assertTrue(es.getEntries().get(4).getTemporal() instanceof PersonHobby);
         ph = (PersonHobby) es.getEntries().get(4).getTemporal();
         Assert.assertEquals(T4, ph.getEffectivity().getStart());
         Assert.assertEquals(PersonModelExample.SKI, ph.getName());
         Assert.assertEquals(PersonModelExample.SKI, ph.getHobby().getName());
-        //Assert.assertSame(p, ph.getPerson());
+        // Assert.assertSame(p, ph.getPerson());
 
         Assert.assertEquals(2, p.getPersonHobbies().size());
 
@@ -143,8 +144,7 @@ public class DeleteEditionSetTests extends BaseTestCase {
         EditionSet t2 = editionSets.get(1);
         Assert.assertNotNull(t2);
         Assert.assertEquals(T4, t2.getEffective());
-        
-        
+
     }
 
     /**
@@ -174,48 +174,81 @@ public class DeleteEditionSetTests extends BaseTestCase {
 
         Assert.assertTrue(entry.getTemporal() instanceof PersonHobby);
     }
-    
+
     /**
-     * TODO 
+     * TODO
      */
-   // @Test
+    @Test
     public void deleteT4() {
         TemporalEntityManager em = getEntityManager();
         em.setEffectiveTime(T4);
-        
+
         EditionSet esT4 = em.getEditionSet();
-        
+
         Assert.assertNotNull(esT4);
-        
+
         em.getTransaction().begin();
         em.remove(esT4);
-        
-        em.flush();
-        
+        em.getTransaction().commit();
+
         esT4 = em.find(EditionSet.class, T4);
         Assert.assertNull(esT4);
     }
 
     /**
-     * TODO 
+     * TODO
      */
-  //  @Test
+    @Test
     public void deleteT2() {
         TemporalEntityManager em = getEntityManager();
         em.setEffectiveTime(T2);
-        
+
         EditionSet esT2 = em.getEditionSet();
-        
+
         Assert.assertNotNull(esT2);
-        
+
         em.getTransaction().begin();
         em.remove(esT2);
-        
-        em.flush();
+        em.getTransaction().commit();
 
-        esT2= em.find(EditionSet.class, T2);
+        esT2 = em.find(EditionSet.class, T2);
         Assert.assertNull(esT2);
-}
+    }
+
+    /**
+     * Create future edition of Address@T2 and delete it.
+     */
+    @Test
+    public void deleteFutureEntity() {
+        TemporalEntityManager em = getEntityManager();
+        em.setEffectiveTime(T2);
+
+        em.getTransaction().begin();
+
+        Address addr = em.newEntity(Address.class);
+
+        Assert.assertNotNull(addr);
+        Assert.assertEquals(T2, addr.getEffectivity().getStart());
+        Assert.assertEquals(EOT, addr.getEffectivity().getEnd());
+        Assert.assertSame(addr, addr.getContinuity());
+        Assert.assertTrue(addr.getContinuityId() > 0);
+
+        em.getTransaction().commit();
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T2);
+
+        addr = em.find(Address.class, addr.getContinuityId());
+
+        Assert.assertNotNull(addr);
+        Assert.assertEquals(T2, addr.getEffectivity().getStart());
+        Assert.assertEquals(EOT, addr.getEffectivity().getEnd());
+
+        em.getTransaction().begin();
+        em.remove(addr);
+        em.getTransaction().commit();
+    }
 
     /**
      * Populate initial sample entity

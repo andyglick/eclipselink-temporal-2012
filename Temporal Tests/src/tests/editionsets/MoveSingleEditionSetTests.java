@@ -11,8 +11,11 @@
 package tests.editionsets;
 
 import static example.PersonModelExample.GOLF;
+import static example.PersonModelExample.T1;
 import static example.PersonModelExample.T2;
+import static example.PersonModelExample.*;
 import junit.framework.Assert;
+import static temporal.Effectivity.*;
 import model.Address;
 import model.Person;
 import model.Phone;
@@ -21,6 +24,7 @@ import org.junit.Test;
 
 import temporal.EditionSet;
 import temporal.EditionSetEntry;
+import temporal.EditionSetHelper;
 import temporal.TemporalEntityManager;
 import tests.BaseTestCase;
 import example.PersonModelExample;
@@ -43,7 +47,44 @@ public class MoveSingleEditionSetTests extends BaseTestCase {
     public void moveEditionSetFromT2toT3() {
         TemporalEntityManager em = getEntityManager();
 
+        em.setEffectiveTime(T2);
+        EditionSet es = em.getEditionSet();
+
+        Assert.assertNotNull(es);
+        Assert.assertEquals(T2, es.getEffective());
+        Assert.assertEquals(3, es.getEntries().size());
+
+        for (EditionSetEntry entry : es.getEntries()) {
+            Assert.assertEquals(T2, entry.getTemporal().getEffectivity().getStart());
+        }
+
+        // Make the move
         em.getTransaction().begin();
+
+        EditionSet newES = EditionSetHelper.move(em, es, T3);
+
+        Assert.assertEquals(T2, es.getEffective());
+        Assert.assertEquals(0, es.getEntries().size());
+        Assert.assertFalse(es.hasChanges());
+        
+        Assert.assertNotNull(newES);
+        Assert.assertSame(newES, em.getEditionSet());
+        Assert.assertEquals(T3, (long) em.getEffectiveTime());
+        Assert.assertEquals(T3, newES.getEffective());
+        Assert.assertEquals(3, newES.getEntries().size());
+        Assert.assertTrue(newES.hasChanges());
+
+        for (EditionSetEntry entry : newES.getEntries()) {
+            Assert.assertEquals(T3, entry.getTemporal().getEffectivity().getStart());
+        }
+
+        em.flush();
+
+    }
+
+    @Test
+    public void moveEditionSetFromT2toT1() {
+        TemporalEntityManager em = getEntityManager();
 
         em.setEffectiveTime(T2);
         EditionSet es = em.getEditionSet();
@@ -53,11 +94,57 @@ public class MoveSingleEditionSetTests extends BaseTestCase {
         Assert.assertEquals(3, es.getEntries().size());
 
         for (EditionSetEntry entry : es.getEntries()) {
-            System.out.println("> " + entry.getTemporal());
-            for (String attrName : entry.getAttributes()) {
-                System.out.println("\t>> " + attrName);
-            }
+            Assert.assertEquals(T2, entry.getTemporal().getEffectivity().getStart());
         }
+
+        // Make the move
+        em.getTransaction().begin();
+
+        EditionSet newES = EditionSetHelper.move(em, es, T1);
+
+        Assert.assertEquals(T2, es.getEffective());
+        Assert.assertEquals(0, es.getEntries().size());
+        Assert.assertFalse(es.hasChanges());
+
+        Assert.assertNotNull(newES);
+        Assert.assertSame(newES, em.getEditionSet());
+        Assert.assertEquals(T1, (long) em.getEffectiveTime());
+        Assert.assertEquals(T1, newES.getEffective());
+        Assert.assertEquals(3, newES.getEntries().size());
+        Assert.assertTrue(newES.hasChanges());
+
+        for (EditionSetEntry entry : newES.getEntries()) {
+            Assert.assertEquals(T1, entry.getTemporal().getEffectivity().getStart());
+        }
+
+        em.flush();
+
+    }
+
+    @Test
+    public void moveEditionSetFromT2toBOT() {
+        TemporalEntityManager em = getEntityManager();
+
+        em.setEffectiveTime(T2);
+        EditionSet es = em.getEditionSet();
+
+        Assert.assertNotNull(es);
+        Assert.assertEquals(T2, es.getEffective());
+        Assert.assertEquals(3, es.getEntries().size());
+
+        for (EditionSetEntry entry : es.getEntries()) {
+            Assert.assertEquals(T2, entry.getTemporal().getEffectivity().getStart());
+        }
+
+        // Make the move
+        em.getTransaction().begin();
+
+        try {
+            EditionSetHelper.move(em, es, BOT);
+        } catch (IllegalArgumentException iae) {
+            return;
+        }
+        Assert.fail("Expected IllegalArgumentException not thrown");
     }
 
     /**

@@ -44,8 +44,8 @@ public abstract class BaseTemporalEntity<T extends TemporalEntity<?>> extends Ba
 
     @Embedded
     private Effectivity effectivity = new Effectivity();
-    
-    @Column(name="CID", insertable=false, updatable=false)
+
+    @Column(name = "CID", insertable = false, updatable = false)
     private int continuityId;
 
     public T getContinuity() {
@@ -54,10 +54,15 @@ public abstract class BaseTemporalEntity<T extends TemporalEntity<?>> extends Ba
 
     public void setContinuity(T continuity) {
         this.continuity = continuity;
-        this.continuityId = continuity.getId();
+        if (continuity != null) {
+            this.continuityId = continuity.getId();
+        }
     }
 
     public int getContinuityId() {
+        if (this.continuityId <= 0 && getContinuity() != null) {
+            this.continuityId = getContinuity().getId();
+        }
         return continuityId;
     }
 
@@ -72,9 +77,9 @@ public abstract class BaseTemporalEntity<T extends TemporalEntity<?>> extends Ba
     public void setPreviousEdition(T previousEdition) {
         this.previousEdition = previousEdition;
     }
-    
+
     public boolean isContinuity() {
-        return getContinuity() != null &&  getId() == getContinuity().getId();
+        return getContinuity() != null && getId() == getContinuity().getId();
     }
-    
+
 }
