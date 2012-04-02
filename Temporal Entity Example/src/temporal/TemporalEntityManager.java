@@ -166,6 +166,7 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
     protected void setEditionSet(EditionSet editionSet) {
         this.editionSet = editionSet;
         this.effective = editionSet.getEffective();
+        setProperty(EFF_TS_PROPERTY, editionSet.getEffective());
     }
 
     public boolean hasEditionSet() {

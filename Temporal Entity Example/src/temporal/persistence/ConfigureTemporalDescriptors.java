@@ -19,9 +19,11 @@ import static temporal.persistence.DescriptorHelper.EDITION_VIEW;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
+import java.util.Set;
 import java.util.Vector;
 
 import org.eclipse.persistence.config.CacheIsolationType;
@@ -242,7 +244,9 @@ public class ConfigureTemporalDescriptors implements SessionCustomizer {
      */
     @SuppressWarnings("unchecked")
     private void fixEditionRelationships(ClassDescriptor descriptor, DynamicClassLoader dcl, String suffix) throws ClassNotFoundException {
-
+        Set<ForeignReferenceMapping> temporalMappings = new HashSet<ForeignReferenceMapping>();
+        descriptor.setProperty(DescriptorHelper.TEMPORAL_MAPPINGS, temporalMappings);
+        
         // Point all reference mappings to TemporalEntity to edition classes
         for (DatabaseMapping mapping : descriptor.getMappings()) {
             if (mapping.isForeignReferenceMapping()) {
@@ -267,6 +271,7 @@ public class ConfigureTemporalDescriptors implements SessionCustomizer {
                         ((ReadObjectQuery) contMapping.getSelectionQuery()).setReferenceClass(frMapping.getReferenceClass());
                     } else if (frMapping.isOneToOneMapping()) {
                         fixFKNames(((OneToOneMapping) frMapping).getSourceToTargetKeyFields());
+                        temporalMappings.add(frMapping);
                     } else if (frMapping.isOneToManyMapping()) {
                         OneToManyMapping otMMapping = (OneToManyMapping) frMapping;
                         fixFKNames(otMMapping.getTargetForeignKeysToSourceKeys());
@@ -284,7 +289,6 @@ public class ConfigureTemporalDescriptors implements SessionCustomizer {
                             }
                             otMMapping.addTargetForeignKeyFieldName(sourceField.getQualifiedName(), targetField.getQualifiedName());
                         }
-
                     } else {
                         throw new RuntimeException("Unsupported temporal entity mapping: " + frMapping);
                     }

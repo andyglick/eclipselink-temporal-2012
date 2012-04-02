@@ -61,12 +61,13 @@ public class MoveSingleEditionSetTests extends BaseTestCase {
         // Make the move
         em.getTransaction().begin();
 
-        EditionSet newES = EditionSetHelper.move(em, es, T3);
+        EditionSetHelper.move(em, T3);
+        EditionSet newES = em.getEditionSet();
 
         Assert.assertEquals(T2, es.getEffective());
         Assert.assertEquals(0, es.getEntries().size());
         Assert.assertFalse(es.hasChanges());
-        
+
         Assert.assertNotNull(newES);
         Assert.assertSame(newES, em.getEditionSet());
         Assert.assertEquals(T3, (long) em.getEffectiveTime());
@@ -100,7 +101,8 @@ public class MoveSingleEditionSetTests extends BaseTestCase {
         // Make the move
         em.getTransaction().begin();
 
-        EditionSet newES = EditionSetHelper.move(em, es, T1);
+        EditionSetHelper.move(em, T1);
+        EditionSet newES = em.getEditionSet();
 
         Assert.assertEquals(T2, es.getEffective());
         Assert.assertEquals(0, es.getEntries().size());
@@ -140,7 +142,7 @@ public class MoveSingleEditionSetTests extends BaseTestCase {
         em.getTransaction().begin();
 
         try {
-            EditionSetHelper.move(em, es, BOT);
+            EditionSetHelper.move(em, BOT);
         } catch (IllegalArgumentException iae) {
             return;
         }

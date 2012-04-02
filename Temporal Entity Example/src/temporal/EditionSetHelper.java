@@ -14,6 +14,8 @@ package temporal;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+import java.util.Set;
+import java.util.Vector;
 
 import javax.persistence.EntityManager;
 
@@ -22,6 +24,7 @@ import org.eclipse.persistence.descriptors.changetracking.ChangeTracker;
 import org.eclipse.persistence.internal.sessions.AbstractSession;
 import org.eclipse.persistence.internal.sessions.RepeatableWriteUnitOfWork;
 import org.eclipse.persistence.mappings.DatabaseMapping;
+import org.eclipse.persistence.mappings.ForeignReferenceMapping;
 
 import temporal.persistence.DescriptorHelper;
 
@@ -83,29 +86,62 @@ public class EditionSetHelper {
      *             for invalid effective time or mismatched
      *             {@link TemporalEntityManager} and {@link EditionSet}
      */
-    public static EditionSet move(TemporalEntityManager em, EditionSet es, long effective) {
+    public static void move(TemporalEntityManager em, long effective) {
         if (effective <= Effectivity.BOT) {
             throw new IllegalArgumentException("Invalid effective time for move: " + effective);
         }
-        if (es == null || !es.equals(em.getEditionSet())) {
-            throw new IllegalArgumentException("Invalid TemporalEntitymanager or EditionSet: " + em + "::" + es);
+        if (!em.hasEditionSet()) {
+            em.setEffectiveTime(effective);
+            return;
         }
-        
+        RepeatableWriteUnitOfWork uow = em.unwrap(RepeatableWriteUnitOfWork.class);
+        EditionSet es = em.getEditionSet();
+        // Need to ensure temporal objects are loaded before changing the
+        // effective time.
+        for (EditionSetEntry entry : es.getEntries()) {
+            entry.getTemporal();
+        }
+
         EditionSet newES = new EditionSet(effective);
         em.persist(newES);
-        
+        em.setEditionSet(newES);
+
         for (EditionSetEntry entry : es.getEntries()) {
-            // TODO: Look for conflicts
+            // Look through relationship mappings for references to temporal
+            // which do not exist at the new effective time
+            ClassDescriptor descriptor = DescriptorHelper.getEditionDescriptor(uow, entry.getTemporal().getClass());
+            Set<ForeignReferenceMapping> mappings = DescriptorHelper.getTemporalMappings(descriptor);
+            for (ForeignReferenceMapping mapping : mappings) {
+                Temporal currentTarget = (Temporal) mapping.getRealAttributeValueFromObject(entry.getTemporal(), uow);
+                if (currentTarget != null) {
+                    if (currentTarget.getEffectivity().getStart() > effective) {
+                        // TODO: What about pending changes?
+                        uow.getIdentityMapAccessor().invalidateObject(currentTarget);
+                    }
+
+                    Object id = ((TemporalEntity<?>) currentTarget).getContinuityId();
+                    if (id instanceof Object[] || id instanceof Vector) {
+                        throw new RuntimeException("Composite Key not supported");
+                    }
+                    @SuppressWarnings("unchecked")
+                    Temporal target = em.find(mapping.getReferenceClass(), id);
+                    if (target == null) {
+                        throw new IllegalStateException();
+                    }
+                    mapping.setRealAttributeValueInObject(entry.getTemporal(), target);
+                } else {
+                    // TODO
+                    //throw new IllegalStateException();
+                }
+            }
+
             entry.getTemporal().getEffectivity().setStart(effective);
             newES.getEntries().add(entry);
             entry.setEditionSet(newES);
         }
         es.getEntries().clear();
         em.remove(es);
-        
-        em.setEditionSet(newES);
-        
-        return newES;
+
     }
 
 }

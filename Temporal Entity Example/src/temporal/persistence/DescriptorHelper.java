@@ -15,6 +15,7 @@ package temporal.persistence;
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Member;
 import java.lang.reflect.Proxy;
+import java.util.Set;
 
 import javax.persistence.EntityManager;
 
@@ -23,6 +24,7 @@ import org.eclipse.persistence.internal.descriptors.InstanceVariableAttributeAcc
 import org.eclipse.persistence.internal.descriptors.MethodAttributeAccessor;
 import org.eclipse.persistence.internal.sessions.AbstractSession;
 import org.eclipse.persistence.mappings.DatabaseMapping;
+import org.eclipse.persistence.mappings.ForeignReferenceMapping;
 import org.eclipse.persistence.sessions.Session;
 
 import temporal.BaseEntity;
@@ -53,6 +55,11 @@ public class DescriptorHelper {
      * Entity type name prefix prepended to current entity type
      */
     public static final String EDITION_VIEW = "EditionView";
+
+    /**
+     * TODO
+     */
+    public static final String TEMPORAL_MAPPINGS = "TemporalMappings";
 
     /**
      * Copy mapped value from source to new edition. This copies the real
@@ -120,6 +127,11 @@ public class DescriptorHelper {
             }
         }
         return session.getClassDescriptor(domainObject);
+    }
+    
+    @SuppressWarnings("unchecked")
+    public static Set<ForeignReferenceMapping> getTemporalMappings(ClassDescriptor descriptor) {
+        return (Set<ForeignReferenceMapping>) descriptor.getProperty(TEMPORAL_MAPPINGS);
     }
 
 }

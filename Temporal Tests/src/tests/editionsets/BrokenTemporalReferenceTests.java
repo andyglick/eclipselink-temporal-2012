@@ -10,7 +10,9 @@
  ******************************************************************************/
 package tests.editionsets;
 
-import static example.PersonModelExample.*;
+import static example.PersonModelExample.T1;
+import static example.PersonModelExample.T2;
+import static example.PersonModelExample.T4;
 
 import javax.persistence.RollbackException;
 
@@ -20,6 +22,8 @@ import model.Person;
 
 import org.junit.Test;
 
+import temporal.EditionSet;
+import temporal.EditionSetHelper;
 import temporal.TemporalEntityManager;
 import tests.BaseTestCase;
 
@@ -37,40 +41,128 @@ public class BrokenTemporalReferenceTests extends BaseTestCase {
      * EditionSet@T2 including new
      */
     @Test
-    public void breakFKDeletingEarliedEntity() {
+    public void breakFKFromEntityByDelete() {
         TemporalEntityManager em = getEntityManager();
         em.setEffectiveTime(T2);
-        
+
         em.getTransaction().begin();
         Address aT2 = em.newEntity(Address.class);
         em.getTransaction().commit();
-        
+
         Assert.assertTrue(aT2.getContinuityId() > 0);
         em.close();
-        
+
         em = getEntityManager();
         em.setEffectiveTime(T4);
-        
+
         em.getTransaction().begin();
         Person pT4 = em.newEntity(Person.class);
         Address aT4 = em.find(Address.class, aT2.getContinuityId());
-        
+
         Assert.assertNotNull(aT4);
         Assert.assertEquals(T2, aT4.getEffectivity().getStart());
-        
+
         pT4.setAddress(aT4);
         em.getTransaction().commit();
         em.close();
-        
+
         em = getEntityManager();
         em.setEffectiveTime(T2);
         aT2 = em.find(Address.class, aT2.getContinuityId());
-        
+
         em.getTransaction().begin();
         em.remove(aT2);
-        
+
         try {
+            em.getTransaction().commit();
+        } catch (RollbackException e) {
+            return;
+        }
+        Assert.fail("RollbackException execpted for violating FK");
+    }
+
+    @Test
+    public void breakFKFromEntityByMove() {
+        TemporalEntityManager em = getEntityManager();
+        em.setEffectiveTime(T2);
+
+        em.getTransaction().begin();
+        Address aT2 = em.newEntity(Address.class);
         em.getTransaction().commit();
+
+        Assert.assertTrue(aT2.getContinuityId() > 0);
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T4);
+
+        em.getTransaction().begin();
+        Person pT4 = em.newEntity(Person.class);
+        Address aT4 = em.find(Address.class, aT2.getContinuityId());
+
+        Assert.assertNotNull(aT4);
+        Assert.assertEquals(T2, aT4.getEffectivity().getStart());
+
+        pT4.setAddress(aT4);
+        em.getTransaction().commit();
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T4);
+        EditionSet es = em.getEditionSet();
+
+        Assert.assertNotNull(es);
+        try {
+            EditionSetHelper.move(em, T1);
+        } catch (IllegalStateException e) {
+            return;
+        }
+        Assert.fail("IllegalStateException execpted for violating FK");
+    }
+
+    /**
+     * SETUP 1. Create new AddressEntity to exist at T2 2. Create new
+     * PersonEdition at T4 3. Reference Address@T2 from Person@T4 TEST Delete
+     * EditionSet@T2 including new
+     */
+    @Test
+    public void breakFKFromEdition() {
+        TemporalEntityManager em = getEntityManager();
+        em.setEffectiveTime(T2);
+
+        em.getTransaction().begin();
+        Address aT2 = em.newEntity(Address.class);
+        Person pT2 = em.newEntity(Person.class);
+        pT2.setAddress(aT2);
+        em.getTransaction().commit();
+
+        Assert.assertTrue(aT2.getContinuityId() > 0);
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T4);
+
+        em.getTransaction().begin();
+        Person pT4 = em.find(Person.class, pT2.getContinuityId());
+        pT4 = em.newEdition(pT4);
+        Address aT4 = em.find(Address.class, aT2.getContinuityId());
+
+        Assert.assertNotNull(aT4);
+        Assert.assertEquals(T2, aT4.getEffectivity().getStart());
+
+        pT4.setAddress(aT4);
+        em.getTransaction().commit();
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T2);
+        aT2 = em.find(Address.class, aT2.getContinuityId());
+
+        em.getTransaction().begin();
+        em.remove(aT2);
+
+        try {
+            em.getTransaction().commit();
         } catch (RollbackException e) {
             return;
         }
