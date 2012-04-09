@@ -24,6 +24,7 @@ import org.eclipse.persistence.tools.schemaframework.SchemaManager;
 import org.junit.After;
 import org.junit.AfterClass;
 import org.junit.Before;
+import org.junit.BeforeClass;
 import org.junit.Rule;
 import org.junit.rules.TestName;
 
@@ -47,7 +48,7 @@ public abstract class BaseTestCase {
 
     public EntityManagerFactory getEMF() {
         if (emf == null) {
-            
+
             Map<String, Object> properties = new HashMap<String, Object>();
             properties.put(PersistenceUnitProperties.TRANSACTION_TYPE, "RESOURCE_LOCAL");
             properties.put(PersistenceUnitProperties.NON_JTA_DATASOURCE, "");
@@ -55,7 +56,7 @@ public abstract class BaseTestCase {
             properties.put(PersistenceUnitProperties.JDBC_URL, "jdbc:mysql://localhost:3306/test");
             properties.put(PersistenceUnitProperties.JDBC_USER, "root");
             properties.put(PersistenceUnitProperties.JDBC_PASSWORD, "password");
-            
+
             emf = Persistence.createEntityManagerFactory("example", properties);
 
             Server session = JpaHelper.getServerSession(emf);
@@ -67,11 +68,8 @@ public abstract class BaseTestCase {
             sm.replaceSequences();
 
             // Populate test case example instances
-            TemporalEntityManager em = TemporalEntityManager.getInstance(emf.createEntityManager());
-            em.getTransaction().begin();
-            populate(em);
-            em.getTransaction().commit();
-            em.close();
+            populate(emf);
+
             System.out.println("\n--- CREATE EMF & POPULATE DONE ---\n");
 
             closeEntityManager();
@@ -92,10 +90,22 @@ public abstract class BaseTestCase {
         return this.entityManager;
     }
 
-    public void populate(TemporalEntityManager em) {
+    protected void populate(EntityManagerFactory emf) {
+        TemporalEntityManager em = TemporalEntityManager.getInstance(emf.createEntityManager());
+        em.getTransaction().begin();
+        try {
+            populate(em);
+            em.getTransaction().commit();
+        } finally {
+            em.close();
+        }
+    }
+
+    protected void populate(TemporalEntityManager em) {
     }
 
     @AfterClass
+    @BeforeClass
     public static void closeEMF() {
         if (emf != null && emf.isOpen()) {
             emf.close();

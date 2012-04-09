@@ -15,7 +15,12 @@ package temporal;
 import java.util.ArrayList;
 import java.util.List;
 
-import javax.persistence.*;
+import javax.persistence.CascadeType;
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Id;
+import javax.persistence.OneToMany;
+import javax.persistence.Table;
 
 import org.eclipse.persistence.annotations.ChangeTracking;
 import org.eclipse.persistence.annotations.ChangeTrackingType;
@@ -91,9 +96,8 @@ public class EditionSet {
         return false;
     }
 
-
     protected EditionSetEntry get(Temporal temporal) {
-        for (EditionSetEntry ese: getEntries()) {
+        for (EditionSetEntry ese : getEntries()) {
             if (ese.getTemporal().equals(temporal)) {
                 return ese;
             }

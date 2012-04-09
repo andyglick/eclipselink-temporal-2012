@@ -113,4 +113,11 @@ public class Effectivity {
         }
         return Long.toString(ts);
     }
+
+    public boolean includes(Long effective) {
+        if (effective == null) {
+            return includes(BOT);
+        }
+        return getStart() <= effective && getEnd() > effective;
+    }
 }

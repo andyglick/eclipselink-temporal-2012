@@ -67,6 +67,9 @@ public abstract class BaseTemporalEntity<T extends TemporalEntity<?>> extends Ba
     }
 
     public Effectivity getEffectivity() {
+        if (this.effectivity == null) {
+            this.effectivity = new Effectivity();
+        }
         return this.effectivity;
     }
 

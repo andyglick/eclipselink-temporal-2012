@@ -12,7 +12,9 @@ package tests.editionsets;
 
 import static example.PersonModelExample.T1;
 import static example.PersonModelExample.T2;
+import static example.PersonModelExample.T3;
 import static example.PersonModelExample.T4;
+import static example.PersonModelExample.T5;
 
 import javax.persistence.RollbackException;
 
@@ -167,5 +169,128 @@ public class BrokenTemporalReferenceTests extends BaseTestCase {
             return;
         }
         Assert.fail("RollbackException execpted for violating FK");
+    }
+
+    /**
+     * Create a new Address Entity at BOT with an end of T4. Then create a
+     * future Person at T2 that references the Address. Move the T2
+     * {@link EditionSet} to T5 where there is no valid Address.
+     */
+    @Test
+    public void moveEditionSetBeyondReferencedEnd() {
+        TemporalEntityManager em = getEntityManager();
+        em.getTransaction().begin();
+        Address address = em.newEntity(Address.class);
+        address.getEffectivity().setEnd(T4);
+        em.getTransaction().commit();
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T2);
+
+        em.getTransaction().begin();
+        Address aT2 = em.find(Address.class, address.getContinuityId());
+        Person pT2 = em.newEntity(Person.class);
+        pT2.setAddress(aT2);
+        em.getTransaction().commit();
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T2);
+
+        em.getTransaction().begin();
+        em.getEditionSet();
+        try {
+            EditionSetHelper.move(em, T5);
+            em.getTransaction().commit();
+        } catch (IllegalStateException e) {
+            return;
+        }
+        Assert.fail("IllegalStateException execpted for violating FK");
+    }
+
+    /**
+     * Create a new Address Entity (BOT) and then reference an edition of it
+     * from a future entity at T2. In a subsequent transaction modify the
+     * Address at BOT to have an end of T1. This would cause the FK relationship
+     * from Person at T2 to be invalid.
+     */
+    @Test
+    public void breakFKByChangingEditionEffectiveEnd() {
+        TemporalEntityManager em = getEntityManager();
+        em.getTransaction().begin();
+        Address address = em.newEntity(Address.class);
+        em.getTransaction().commit();
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T2);
+
+        em.getTransaction().begin();
+        Address aBOT = em.find(Address.class, address.getContinuityId());
+        Address aT2 = em.newEdition(aBOT);
+        Person pT2 = em.newEntity(Person.class);
+        pT2.setAddress(aT2);
+        em.getTransaction().commit();
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T4);
+        em.getTransaction().begin();
+
+        pT2 = em.find(Person.class, pT2.getContinuityId());
+        em.newEdition(pT2);
+        em.getTransaction().commit();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T2);
+
+        em.getTransaction().begin();
+        aT2 = em.find(Address.class, address.getContinuityId());
+        aT2.getEffectivity().setEnd(T3);
+        try {
+            em.getTransaction().commit();
+        } catch (IllegalStateException e) {
+            return;
+        }
+        Assert.fail("IllegalStateException execpted for violating FK");
+    }
+
+    /**
+     * Create a new Address Entity (BOT) and then reference it from a future
+     * entity at T2. In a subsequent transaction modify the Address at BOT to
+     * have an end of T1. This would cause the FK relationship from Person at T2
+     * to be invalid.
+     */
+    @Test
+    public void breakFKByChangingCurrentEffectiveEnd() {
+        TemporalEntityManager em = getEntityManager();
+        em.getTransaction().begin();
+        Address address = em.newEntity(Address.class);
+        em.getTransaction().commit();
+        em.close();
+
+        em = getEntityManager();
+        em.setEffectiveTime(T2);
+
+        em.getTransaction().begin();
+        Address aT2 = em.find(Address.class, address.getContinuityId());
+        Person pT2 = em.newEntity(Person.class);
+        pT2.setAddress(aT2);
+        em.getTransaction().commit();
+        em.close();
+
+        em = getEntityManager();
+        Address aBOT = em.find(Address.class, address.getContinuityId());
+        em.getTransaction().begin();
+        aBOT.getEffectivity().setEnd(T1);
+        em.getEditionSet();
+
+        try {
+            em.getTransaction().commit();
+        } catch (IllegalStateException e) {
+            return;
+        }
+        Assert.fail("IllegalStateException execpted for violating FK");
     }
 }

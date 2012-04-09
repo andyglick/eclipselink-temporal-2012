@@ -13,23 +13,14 @@
 package temporal.persistence;
 
 import java.lang.reflect.InvocationHandler;
-import java.lang.reflect.Member;
 import java.lang.reflect.Proxy;
 import java.util.Set;
 
 import javax.persistence.EntityManager;
 
 import org.eclipse.persistence.descriptors.ClassDescriptor;
-import org.eclipse.persistence.internal.descriptors.InstanceVariableAttributeAccessor;
-import org.eclipse.persistence.internal.descriptors.MethodAttributeAccessor;
-import org.eclipse.persistence.internal.sessions.AbstractSession;
-import org.eclipse.persistence.mappings.DatabaseMapping;
-import org.eclipse.persistence.mappings.ForeignReferenceMapping;
+import org.eclipse.persistence.mappings.OneToOneMapping;
 import org.eclipse.persistence.sessions.Session;
-
-import temporal.BaseEntity;
-import temporal.TemporalEntity;
-import temporal.TemporalHelper;
 
 /**
  * This helper is used in to configure and access the temporal values of an
@@ -60,35 +51,6 @@ public class DescriptorHelper {
      * TODO
      */
     public static final String TEMPORAL_MAPPINGS = "TemporalMappings";
-
-    /**
-     * Copy mapped value from source to new edition. This copies the real
-     * attribute value.
-     */
-    protected static void copyValue(AbstractSession session, DatabaseMapping mapping, TemporalEntity<?> source, TemporalEntity<?> target) {
-        if (mapping.getAttributeName().equals("effectivity")) {
-            return;
-        }
-
-        String nonTemporal = (String) mapping.getProperty(TemporalHelper.NON_TEMPORAL);
-        if (nonTemporal != null && Boolean.valueOf(nonTemporal)) {
-            return;
-        }
-
-        Member member = null;
-
-        if (mapping.getAttributeAccessor().isInstanceVariableAttributeAccessor()) {
-            member = ((InstanceVariableAttributeAccessor) mapping.getAttributeAccessor()).getAttributeField();
-        } else {
-            member = ((MethodAttributeAccessor) mapping.getAttributeAccessor()).getGetMethod();
-        }
-        if (member.getDeclaringClass().equals(BaseEntity.class)) {
-            return;
-        }
-
-        Object value = mapping.getRealAttributeValueFromObject(source, session);
-        mapping.setRealAttributeValueInObject(target, value);
-    }
 
     private static ClassDescriptor getDescriptor(Session session, Class<?> entityClass, String type) {
         ClassDescriptor desc = session.getClassDescriptor(entityClass);
@@ -130,8 +92,8 @@ public class DescriptorHelper {
     }
     
     @SuppressWarnings("unchecked")
-    public static Set<ForeignReferenceMapping> getTemporalMappings(ClassDescriptor descriptor) {
-        return (Set<ForeignReferenceMapping>) descriptor.getProperty(TEMPORAL_MAPPINGS);
+    public static Set<OneToOneMapping> getTemporalMappings(ClassDescriptor descriptor) {
+        return (Set<OneToOneMapping>) descriptor.getProperty(TEMPORAL_MAPPINGS);
     }
 
 }

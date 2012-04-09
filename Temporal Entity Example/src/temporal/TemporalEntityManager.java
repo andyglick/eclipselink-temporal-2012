@@ -35,6 +35,8 @@ import org.eclipse.persistence.mappings.DatabaseMapping;
 import org.eclipse.persistence.queries.DatabaseQuery;
 import org.eclipse.persistence.queries.ObjectLevelReadQuery;
 import org.eclipse.persistence.sessions.Session;
+import org.eclipse.persistence.sessions.changesets.ObjectChangeSet;
+import org.eclipse.persistence.sessions.changesets.UnitOfWorkChangeSet;
 
 import temporal.persistence.AbstractEntityManagerWrapper;
 import temporal.persistence.DescriptorHelper;
@@ -113,18 +115,49 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
         return unwrap(RepeatableWriteUnitOfWork.class);
     }
 
+    /**
+     * TODO
+     * 
+     * @param startTime
+     * @throws IllegalStateException
+     *             if there are any {@link Temporal} objects with changes
+     *             pending.
+     */
     public void setEffectiveTime(Long startTime) {
         if (startTime != getEffectiveTime()) {
+            RepeatableWriteUnitOfWork uow = getUnitOfWork();
+            UnitOfWorkChangeSet unitOfWorkChangeSet = uow.getUnitOfWorkChangeSet();
+
+            // Ensure there are no pending changes for any objects in the
+            // current EditionSet
+            if (hasEditionSet() && unitOfWorkChangeSet != null && unitOfWorkChangeSet.hasChanges()) {
+                for (EditionSetEntry ese : getEditionSet().getEntries()) {
+                    ObjectChangeSet objectChanges = unitOfWorkChangeSet.getObjectChangeSetForClone(ese.getTemporal());
+                    if (objectChanges != null && objectChanges.hasChanges()) {
+                        throw new IllegalStateException("Changes pending for current EditionSet. You must commit, Rollback, or flush changes before changing effective time");
+                    }
+                }
+            }
+
+            // Remove any temporal objects in cache which are not valid for the
+            // provided effective time
+            for (Object object : uow.getCloneMapping().keySet()) {
+                if (object instanceof Temporal && !((Temporal) object).getEffectivity().includes(effective)) {
+                    if (uow.getUnitOfWorkChangeSet() != null) {
+                        ObjectChangeSet ocs = uow.getUnitOfWorkChangeSet().getObjectChangeSetForClone(object);
+                        if (ocs != null && ocs.hasChanges()) {
+                            throw new IllegalStateException("Temporal entity has changes pending: " + object);
+                        }
+                    }
+                    uow.getIdentityMapAccessor().removeFromIdentityMap(object);
+                }
+            }
+
             this.editionSet = null;
         }
 
         this.effective = startTime;
         setProperty(EFF_TS_PROPERTY, startTime);
-    }
-
-    public void clearEffectiveTime() {
-        this.effective = null;
-        setProperty(EFF_TS_PROPERTY, null);
     }
 
     /**
@@ -164,9 +197,8 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
     }
 
     protected void setEditionSet(EditionSet editionSet) {
+        setEffectiveTime(editionSet.getEffective());
         this.editionSet = editionSet;
-        this.effective = editionSet.getEffective();
-        setProperty(EFF_TS_PROPERTY, editionSet.getEffective());
     }
 
     public boolean hasEditionSet() {
@@ -336,6 +368,8 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
 
         TemporalEntity<T> edition = (TemporalEntity<T>) descriptor.getInstantiationPolicy().buildNewInstance();
         edition.setContinuity((T) edition);
+        edition.getEffectivity();
+
         if (start != null) {
             edition.getEffectivity().setStart(start);
         }
@@ -511,11 +545,28 @@ public class TemporalEntityManager extends AbstractEntityManagerWrapper {
             if (ese != null) {
                 super.remove(ese);
             }
-        }
-        if (entity instanceof TemporalEntity<?>) {
+        } else if (entity instanceof EditionSet) {
+            EditionSet es = (EditionSet) entity;
+            for (EditionSetEntry ese : es.getEntries()) {
+                if (ese.isTemporalEntity()) {
+                    ese.getTemporalEntity().setContinuity(null);
+                }
+                super.remove(ese.getTemporal());
+            }
+            super.remove(es);
+            this.editionSet = null;
+            return;
+        } else if (entity instanceof TemporalEntity<?>) {
             ((TemporalEntity<?>) entity).setContinuity(null);
         }
+
         super.remove(entity);
+    }
+
+    @Override
+    public void clear() {
+        super.clear();
+        setEffectiveTime(null);
     }
 
     public String toString() {

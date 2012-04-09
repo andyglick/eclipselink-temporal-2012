@@ -48,9 +48,10 @@ public class PropagateEditionChangesListener extends SessionEventAdapter {
         RepeatableWriteUnitOfWork uow = (RepeatableWriteUnitOfWork) event.getSession();
         UnitOfWorkChangeSet uowCS = (UnitOfWorkChangeSet) uow.getUnitOfWorkChangeSet();
         TemporalEntityManager tem = TemporalEntityManager.getInstance(uow);
-        EditionSet es = tem.getEditionSet();
 
         if (tem.hasEditionSet() && tem.getEditionSet().hasChanges() && uowCS.hasChanges()) {
+            EditionSet es = tem.getEditionSet();
+
             for (EditionSetEntry entry : es.getEntries()) {
                 ObjectChangeSet objCS = uowCS.getCloneToObjectChangeSet().get(entry.getTemporal());
                 List<TemporalEntity<?>> futures = findFutureEditions(uow, entry);
@@ -60,7 +61,9 @@ public class PropagateEditionChangesListener extends SessionEventAdapter {
                         ChangeRecord cr = (ChangeRecord) objCS.getAttributesToChanges().get(attr);
                         entry.getAttributes().add(attr);
 
-                        propogateChanges(uow, futures, entry, cr);
+                        if (!cr.getMapping().getAttributeName().equals("continuity")) {
+                            propogateChanges(uow, futures, entry, cr);
+                        }
                     }
                 }
             }

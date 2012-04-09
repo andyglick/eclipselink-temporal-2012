@@ -29,6 +29,7 @@ import model.Person;
 import model.PersonHobby;
 import model.Phone;
 
+import org.eclipse.persistence.internal.sessions.RepeatableWriteUnitOfWork;
 import org.junit.Test;
 
 import temporal.EditionSet;
@@ -189,7 +190,9 @@ public class DeleteEditionSetTests extends BaseTestCase {
 
         em.getTransaction().begin();
         em.remove(esT4);
-        em.getTransaction().commit();
+        
+        RepeatableWriteUnitOfWork uow = em.unwrap(RepeatableWriteUnitOfWork.class);
+        Assert.assertFalse(uow.getDeletedObjects().isEmpty());
 
         esT4 = em.find(EditionSet.class, T4);
         Assert.assertNull(esT4);
@@ -209,8 +212,7 @@ public class DeleteEditionSetTests extends BaseTestCase {
 
         em.getTransaction().begin();
         em.remove(esT2);
-        em.getTransaction().commit();
-
+        
         esT2 = em.find(EditionSet.class, T2);
         Assert.assertNull(esT2);
     }

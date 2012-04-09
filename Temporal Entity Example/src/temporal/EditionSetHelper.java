@@ -24,7 +24,7 @@ import org.eclipse.persistence.descriptors.changetracking.ChangeTracker;
 import org.eclipse.persistence.internal.sessions.AbstractSession;
 import org.eclipse.persistence.internal.sessions.RepeatableWriteUnitOfWork;
 import org.eclipse.persistence.mappings.DatabaseMapping;
-import org.eclipse.persistence.mappings.ForeignReferenceMapping;
+import org.eclipse.persistence.mappings.OneToOneMapping;
 
 import temporal.persistence.DescriptorHelper;
 
@@ -80,58 +80,83 @@ public class EditionSetHelper {
     }
 
     /**
-     * Move the provided {@link EditionSet} to the new effective time
+     * Move the provided {@link EditionSet} to the new effective time. In
+     * addition to updating the effective start time for all editions within the
+     * set the move must also handle:
+     * <ul>
+     * <li>Correct any applied change propagation to future editions from the
+     * {@link EditionSet} being moved as well as the surrounding ones at the
+     * source and destination.
+     * <li>Properly updating the start and end time effective time on editions
+     * the surround the source and target of the move.
+     * <li>Update all temporal relationships so that the managed entity is
+     * correct. This includes populating 1:1 and M:1 to ensure they are valid
+     * and not causing broken FKs.
+     * </ul>
      * 
      * @throws IllegalArgumentException
-     *             for invalid effective time or mismatched
-     *             {@link TemporalEntityManager} and {@link EditionSet}
+     *             for invalid effective time
+     * @throws IllegalStateException
+     *             if the current {@link EditionSet} has unwritten changes.
      */
     public static void move(TemporalEntityManager em, long effective) {
         if (effective <= Effectivity.BOT) {
             throw new IllegalArgumentException("Invalid effective time for move: " + effective);
         }
+        RepeatableWriteUnitOfWork uow = em.unwrap(RepeatableWriteUnitOfWork.class);
+        // Reject moves when changes still pending to the current EditionSet
+        if (uow.getUnitOfWorkChangeSet() != null &&  uow.getUnitOfWorkChangeSet().hasChanges()) {
+            throw new IllegalStateException("Cannot move EditionSet with pending changes"); // TODO: Confirm
+        }
         if (!em.hasEditionSet()) {
             em.setEffectiveTime(effective);
             return;
         }
-        RepeatableWriteUnitOfWork uow = em.unwrap(RepeatableWriteUnitOfWork.class);
+
         EditionSet es = em.getEditionSet();
-        // Need to ensure temporal objects are loaded before changing the
-        // effective time.
+
+        // Need to ensure temporal objects in the EditionSetEntry(s) are loaded
+        // as well as the 1:1 related temporals from the edition before changing
+        // the effective time.
         for (EditionSetEntry entry : es.getEntries()) {
             entry.getTemporal();
-        }
+            ClassDescriptor descriptor = DescriptorHelper.getEditionDescriptor(uow, entry.getTemporal().getClass());
+            Set<OneToOneMapping> mappings = DescriptorHelper.getTemporalMappings(descriptor);
+            for (OneToOneMapping mapping : mappings) {
+                mapping.getRealAttributeValueFromObject(entry.getTemporal(), uow);
+            }
+        }        
+
 
         EditionSet newES = new EditionSet(effective);
         em.persist(newES);
         em.setEditionSet(newES);
+        //em.clear();
 
         for (EditionSetEntry entry : es.getEntries()) {
             // Look through relationship mappings for references to temporal
             // which do not exist at the new effective time
             ClassDescriptor descriptor = DescriptorHelper.getEditionDescriptor(uow, entry.getTemporal().getClass());
-            Set<ForeignReferenceMapping> mappings = DescriptorHelper.getTemporalMappings(descriptor);
-            for (ForeignReferenceMapping mapping : mappings) {
-                Temporal currentTarget = (Temporal) mapping.getRealAttributeValueFromObject(entry.getTemporal(), uow);
-                if (currentTarget != null) {
-                    if (currentTarget.getEffectivity().getStart() > effective) {
-                        // TODO: What about pending changes?
-                        uow.getIdentityMapAccessor().invalidateObject(currentTarget);
-                    }
+            Set<OneToOneMapping> mappings = DescriptorHelper.getTemporalMappings(descriptor);
 
-                    Object id = ((TemporalEntity<?>) currentTarget).getContinuityId();
-                    if (id instanceof Object[] || id instanceof Vector) {
-                        throw new RuntimeException("Composite Key not supported");
+            for (OneToOneMapping mapping : mappings) {
+                Temporal currentTarget = (Temporal) mapping.getRealAttributeValueFromObject(entry.getTemporal(), uow);
+
+                if (currentTarget != null) {
+
+                    if (!currentTarget.getEffectivity().includes(effective)) {
+                        
+                        Object id = ((TemporalEntity<?>) currentTarget).getContinuityId();
+                        if (id instanceof Object[] || id instanceof Vector) {
+                            throw new RuntimeException("Composite Key not supported");
+                        }
+                        @SuppressWarnings("unchecked")
+                        Temporal target = em.find(mapping.getReferenceClass(), id);
+                        if (target == null) {
+                            throw new IllegalStateException();
+                        }
+                        mapping.setRealAttributeValueInObject(entry.getTemporal(), target);
                     }
-                    @SuppressWarnings("unchecked")
-                    Temporal target = em.find(mapping.getReferenceClass(), id);
-                    if (target == null) {
-                        throw new IllegalStateException();
-                    }
-                    mapping.setRealAttributeValueInObject(entry.getTemporal(), target);
-                } else {
-                    // TODO
-                    //throw new IllegalStateException();
                 }
             }
 
@@ -139,6 +164,7 @@ public class EditionSetHelper {
             newES.getEntries().add(entry);
             entry.setEditionSet(newES);
         }
+        // Clear the moved entries from the EditionSet being removed.
         es.getEntries().clear();
         em.remove(es);
 

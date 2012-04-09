@@ -122,4 +122,8 @@ public class EditionSetEntry {
         return "EditionSetEntry[" + getTemporal() + "]";
     }
 
+    public boolean isTemporalEntity() {
+       return getTemporal() != null && getTemporal() instanceof TemporalEntity<?>;
+    }
+
 }

@@ -244,7 +244,7 @@ public class ConfigureTemporalDescriptors implements SessionCustomizer {
      */
     @SuppressWarnings("unchecked")
     private void fixEditionRelationships(ClassDescriptor descriptor, DynamicClassLoader dcl, String suffix) throws ClassNotFoundException {
-        Set<ForeignReferenceMapping> temporalMappings = new HashSet<ForeignReferenceMapping>();
+        Set<OneToOneMapping> temporalMappings = new HashSet<OneToOneMapping>();
         descriptor.setProperty(DescriptorHelper.TEMPORAL_MAPPINGS, temporalMappings);
         
         // Point all reference mappings to TemporalEntity to edition classes
@@ -270,8 +270,9 @@ public class ConfigureTemporalDescriptors implements SessionCustomizer {
                         contMapping.getSelectionQuery().setRedirector(new ContinuityMappingQueryRedirector());
                         ((ReadObjectQuery) contMapping.getSelectionQuery()).setReferenceClass(frMapping.getReferenceClass());
                     } else if (frMapping.isOneToOneMapping()) {
-                        fixFKNames(((OneToOneMapping) frMapping).getSourceToTargetKeyFields());
-                        temporalMappings.add(frMapping);
+                        OneToOneMapping otoMapping = (OneToOneMapping) frMapping;
+                        fixFKNames((otoMapping).getSourceToTargetKeyFields());
+                        temporalMappings.add(otoMapping);
                     } else if (frMapping.isOneToManyMapping()) {
                         OneToManyMapping otMMapping = (OneToManyMapping) frMapping;
                         fixFKNames(otMMapping.getTargetForeignKeysToSourceKeys());

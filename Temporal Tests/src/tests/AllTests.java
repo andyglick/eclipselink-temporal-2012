@@ -16,12 +16,11 @@ import org.junit.runners.Suite.SuiteClasses;
 
 @RunWith(Suite.class)
 @SuiteClasses({ tests.internal.AllTests.class, 
-                FullPersonWithEditions.class, 
+                FullPersonWithEditionsQueries.class, 
+                FullPersonWithEditionsMods.class,
                 FuturePersonTests.class,
                 DeleteTests.class,
                 ProxyWrapperUpdateTests.class,
-                //ModifyCurrentTests.class})
-                //DeleteContinuityTests.class,
                 MultipleEditionQueries.class,
                 DuplicateInsertOnCreateMerge.class,
                 tests.editionsets.AllTests.class})

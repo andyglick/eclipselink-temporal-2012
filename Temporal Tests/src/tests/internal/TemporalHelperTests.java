@@ -86,7 +86,7 @@ public class TemporalHelperTests extends BaseTestCase {
 
         verifySetStartTime(em, T3);
 
-        em.clearEffectiveTime();
+        em.clear();
 
         assertFalse(em.hasEffectiveTime());
         assertNull(em.getEffectiveTime());
@@ -120,12 +120,12 @@ public class TemporalHelperTests extends BaseTestCase {
         verifySetStartTime(em2, T7);
         verifySetStartTime(em1, T6);
 
-        em1.clearEffectiveTime();
+        em1.clear();
         verifySetStartTime(em2, T7);
         assertFalse(em1.hasEffectiveTime());
         assertNull(em1.getEffectiveTime());
 
-        em2.clearEffectiveTime();
+        em2.clear();
         assertFalse(em2.hasEffectiveTime());
         assertNull(em2.getEffectiveTime());
     }

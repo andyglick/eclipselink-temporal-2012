@@ -8,23 +8,22 @@
  * 
  * Contributors: dclarke - Bug 361016: Future Versions Examples
  ******************************************************************************/
-package tests.editionsets;
+package tests;
 
 import org.junit.runner.RunWith;
 import org.junit.runners.Suite;
 import org.junit.runners.Suite.SuiteClasses;
 
+import tests.editionsets.FullPersonWithEditionsDelete;
+import tests.editionsets.FullPersonWithEditionsMove;
+
+/**
+ * Test suite to debug issues with multiple subclasses of {@link FullPersonWithEditions} 
+ */
 @RunWith(Suite.class)
-@SuiteClasses({ EditionSetConfigTests.class, 
-                CreateEditionSetTests.class, 
-                ApplySimpleEditionSetTests.class, 
-                MoveSingleEditionSetTests.class,
+@SuiteClasses({ FullPersonWithEditionsQueries.class, 
+                FullPersonWithEditionsMods.class,
                 FullPersonWithEditionsMove.class,
-                FullPersonWithEditionsDelete.class,
-                DeleteEditionSetTests.class,
-                PropagateChangesTests.class,
-                PropagateDeleteChangesTests.class,
-                BrokenTemporalReferenceTests.class,
-                })
-public class AllTests {
+                FullPersonWithEditionsDelete.class})
+public class AllFullPersonTests {
 }
