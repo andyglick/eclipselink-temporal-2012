@@ -3,3 +3,10 @@
 /Temporal Tests/classes
 /Temporal WAR/build
 /Temporal EJB/build
+
+target/
+.idea/
+
+*.iml
+*.ipr
+*.iws
