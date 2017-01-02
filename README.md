@@ -1,6 +1,8 @@
 Eclipselink Temporal circa 2012
 ===============================
 
+Have been working on the 2.3.1 branch, look there to see what I've been up to.
+
 There has been a project, eclipselink temporal in the Eclipse git repo for a many years now. No one seems to have worked on it since 2012.
 
 http://git.eclipse.org/gitroot/eclipselink/examples/temporal.git
