@@ -151,7 +151,7 @@ public class EditionSetHelper {
                             throw new RuntimeException("Composite Key not supported");
                         }
                         @SuppressWarnings("unchecked")
-                        Temporal target = em.find(mapping.getReferenceClass(), id);
+                        Temporal target = em.find((Class<Temporal>) mapping.getReferenceClass(), id);
                         if (target == null) {
                             throw new IllegalStateException();
                         }

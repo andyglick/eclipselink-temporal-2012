@@ -106,6 +106,30 @@
     </pluginManagement>
     <plugins>
       <plugin>
+        <groupId>au.com.alderaan</groupId>
+        <artifactId>eclipselink-staticweave-maven-plugin</artifactId>
+        <version>1.0.4</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>weave</goal>
+            </goals>
+            <phase>process-classes</phase>
+            <configuration>
+              <logLevel>ALL</logLevel>
+              <includeProjectClasspath>true</includeProjectClasspath>
+            </configuration>
+          </execution>
+        </executions>
+        <dependencies>
+          <dependency>
+            <groupId>org.eclipse.persistence</groupId>
+            <artifactId>eclipselink</artifactId>
+            <version>${eclipselink.version}</version>
+          </dependency>
+        </dependencies>
+      </plugin>
+      <plugin>
         <artifactId>maven-dependency-plugin</artifactId>
       </plugin>
       <plugin>
@@ -117,6 +141,7 @@
       </plugin>
     </plugins>
   </build>
+
   <profiles>
     <profile>
       <id>verbose-logging</id>
@@ -148,12 +173,19 @@
       <dependency>
         <groupId>org.eclipse.persistence</groupId>
         <artifactId>javax.persistence</artifactId>
-        <version>2.1.1</version>
+        <version>2.0.0</version>
       </dependency>
     </dependencies>
   </dependencyManagement>
 
   <dependencies>
+
+    <dependency>
+      <groupId>com.h2database</groupId>
+      <artifactId>h2</artifactId>
+      <version>1.4.193</version>
+    </dependency>
+    
     <dependency>
       <groupId>org.springframework</groupId>
       <artifactId>spring-core</artifactId>
@@ -205,6 +237,5 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
-
 
 </project>
