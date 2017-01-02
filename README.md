@@ -9,6 +9,6 @@ http://git.eclipse.org/gitroot/eclipselink/examples/temporal.git
 
 Given that I prefer Eclipselink to Hibernate and being interested in Temporal Database issues for a long time I thought to get it out of their git and brush it off. So I have moved it to github and am in the process of migrating the code to a Maven build.
 
-I've been working woith the temportal-entity-example module.
+I've been working with the temportal-entity-example module.
 
 I've been stumbling around a small number of issues but hope to make fairly rapid progress.
